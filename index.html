@@ -2,247 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS v10 | Ultimate</title>
+    <title>NEXUS v10 | Ultimate Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;500;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #1e90ff; --accent: #4da6ff; --bg: #050505;
-            --glass: rgba(15, 15, 20, 0.7);
-        }
+        /* CSS Gộp từ bản v10 và UI Kazona của bạn */
+        :root { --primary: #1e90ff; --accent: #4da6ff; --glass: rgba(15, 15, 20, 0.7); }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Geist', sans-serif; }
-        body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; }
-
-        /* VIDEO BG */
-        .video-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover; z-index: -1; opacity: 0.3;
-        }
-
-        /* --- AUTH SCREEN --- */
-        #auth-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(15px);
-            display: flex; justify-content: center; align-items: center; z-index: 9999;
-        }
-        .auth-box {
-            background: var(--glass); border: 1px solid rgba(30, 144, 255, 0.3);
-            padding: 40px; border-radius: 20px; width: 380px; text-align: center;
-            box-shadow: 0 0 50px rgba(30, 144, 255, 0.2);
-        }
-        .auth-box h2 { color: var(--primary); margin-bottom: 20px; font-size: 2rem; }
+        body { background: #050505; color: #fff; height: 100vh; overflow: hidden; }
+        .video-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.3; }
         
-        /* --- MAIN APP --- */
+        #auth-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .auth-box { background: var(--glass); border: 1px solid var(--primary); padding: 40px; border-radius: 20px; width: 380px; text-align: center; }
+        
         #app-screen { display: flex; height: 100%; }
-        .hidden { display: none !important; }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 260px; background: var(--glass); backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px; display: flex; flex-direction: column;
-        }
-        .logo { font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
-        .nav-item {
-            padding: 15px; margin-bottom: 8px; border-radius: 10px; cursor: pointer;
-            color: #888; transition: 0.3s; font-weight: 500; display: flex; gap: 15px; align-items: center;
-        }
-        .nav-item:hover, .nav-item.active { background: rgba(30, 144, 255, 0.15); color: var(--primary); }
-
-        /* CONTENT */
+        .sidebar { width: 260px; background: var(--glass); border-right: 1px solid rgba(255,255,255,0.1); padding: 20px; display: flex; flex-direction: column; }
         .main { flex: 1; padding: 30px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .card { background: var(--glass); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 25px; margin-bottom: 20px; }
         
-        /* CARDS & INPUTS */
-        .grid-2 { display: grid; grid-template-columns: 350px 1fr; gap: 25px; }
-        .card {
-            background: var(--glass); border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px; padding: 25px;
-        }
-        .card h3 { color: var(--accent); margin-bottom: 15px; display: flex; gap: 10px; align-items: center; }
+        input, textarea { width: 100%; background: rgba(0,0,0,0.5); border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; outline: none; }
+        .btn { width: 100%; padding: 12px; border-radius: 50px; border: none; cursor: pointer; font-weight: 700; text-transform: uppercase; transition: 0.3s; color: white; background: var(--primary); }
+        .hidden { display: none !important; }
         
-        input, textarea {
-            width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
-            color: white; padding: 12px; border-radius: 8px; outline: none; margin-bottom: 15px; transition: 0.3s;
-        }
-        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(30, 144, 255, 0.2); }
-        
-        /* BUTTONS */
-        .btn {
-            width: 100%; padding: 12px; border: none; border-radius: 50px; cursor: pointer;
-            font-weight: 700; text-transform: uppercase; transition: 0.3s; color: white;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            box-shadow: 0 5px 15px rgba(30, 144, 255, 0.3);
-        }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(30, 144, 255, 0.5); }
-        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); margin-top: 10px; }
-        .btn-danger { background: #ff4444; box-shadow: 0 5px 15px rgba(255, 68, 68, 0.3); }
-
-        /* PROCESS LIST */
-        .proc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .proc-item {
-            background: rgba(0,0,0,0.6); padding: 15px; border-radius: 10px;
-            border-left: 3px solid; position: relative;
-        }
-        .proc-header { display: flex; justify-content: space-between; font-family: monospace; color: var(--accent); margin-bottom: 10px; }
-        .proc-logs { height: 100px; overflow-y: auto; background: #000; padding: 8px; font-family: monospace; font-size: 11px; color: #0f0; border-radius: 5px; }
-        .btn-del { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #f44; cursor: pointer; }
+        .proc-item { background: rgba(0,0,0,0.6); padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary); margin-bottom: 10px; }
+        .proc-logs { height: 100px; overflow-y: auto; background: #000; padding: 8px; font-family: monospace; font-size: 11px; color: #0f0; }
     </style>
 </head>
 <body>
-
-    <video autoplay loop muted playsinline class="video-bg">
-        <source src="https://res.cloudinary.com/dwzczbbpr/video/upload/Violet_Dark_Blue_White_Anime_Music_Twitch_Background_1_et0ilf.mp4" type="video/mp4">
-    </video>
+    <video autoplay loop muted playsinline class="video-bg"><source src="https://res.cloudinary.com/dwzczbbpr/video/upload/Violet_Dark_Blue_White_Anime_Music_Twitch_Background_1_et0ilf.mp4" type="video/mp4"></video>
 
     <div id="auth-screen">
         <div class="auth-box">
             <h2>NEXUS LOGIN</h2>
-            <input type="text" id="l-user" placeholder="Tên đăng nhập">
-            <input type="password" id="l-pass" placeholder="Mật khẩu">
-            <button class="btn" onclick="auth('login')">ĐĂNG NHẬP</button>
-            <button class="btn btn-outline" onclick="auth('register')">ĐĂNG KÝ NGAY</button>
-            <p id="auth-msg" style="color: #f44; margin-top: 10px; font-size: 12px;"></p>
+            <input type="text" id="l-user" placeholder="Username">
+            <input type="password" id="l-pass" placeholder="Password">
+            <button class="btn" onclick="auth('login')">LOGIN</button>
+            <button class="btn" style="background:transparent; border:1px solid var(--primary); margin-top:10px" onclick="auth('register')">REGISTER</button>
         </div>
     </div>
 
     <div id="app-screen" class="hidden">
         <div class="sidebar">
-            <div class="logo"><i class="fas fa-bolt"></i> NEXUS v10</div>
-            <div class="nav-item active"><i class="fas fa-chart-pie"></i> Dashboard</div>
-            <div style="margin-top: auto">
-                <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</div>
-                <div style="padding: 10px; font-size: 12px; color: #666;">User: <span id="u-name" style="color: var(--primary)">...</span></div>
+            <div style="font-size:1.5rem; font-weight:800; margin-bottom:40px"><i class="fas fa-bolt"></i> NEXUS v10</div>
+            <div style="margin-top:auto">
+                <button class="btn btn-danger" onclick="logout()">LOGOUT</button>
+                <div id="u-display" style="padding:10px; font-size:12px; color:var(--primary)">User: ...</div>
             </div>
         </div>
-
         <div class="main">
-            <div class="header">
-                <h2><i class="fas fa-terminal"></i> DASHBOARD</h2>
-                <button class="btn btn-danger" style="width: auto; padding: 10px 20px;" onclick="control('stop_all')">STOP ALL</button>
-            </div>
-
-            <div class="grid-2">
+            <div class="grid-2" style="display:grid; grid-template-columns: 350px 1fr; gap:25px">
                 <div class="card">
                     <h3><i class="fas fa-plus-circle"></i> KHỞI TẠO</h3>
-                    <textarea id="tokens" placeholder="Tokens (Mỗi dòng 1 cái)"></textarea>
-                    <textarea id="channels" rows="2" placeholder="Channels ID (123, 456...)"></textarea>
-                    <textarea id="message" rows="2" placeholder="Nội dung..."></textarea>
-                    <input type="text" id="proxy" placeholder="Proxy (user:pass@ip:port)">
-                    <div style="display: flex; gap: 10px;">
-                        <input type="number" id="delay" value="5" placeholder="Delay (s)">
-                        <input type="number" id="count" value="0" placeholder="Số lượng (0=∞)">
-                    </div>
+                    <textarea id="tokens" placeholder="Dán danh sách Tokens..."></textarea>
+                    <textarea id="channels" rows="2" placeholder="ID Kênh (123, 456...)"></textarea>
+                    <textarea id="message" rows="2" placeholder="Nội dung tin nhắn..."></textarea>
+                    <input type="number" id="delay" value="5" placeholder="Delay (s)">
                     <button class="btn" onclick="start()">CHẠY NGAY</button>
                 </div>
-
                 <div class="card">
-                    <h3><i class="fas fa-server"></i> TIẾN TRÌNH HOẠT ĐỘNG</h3>
-                    <div id="list" class="proc-list"></div>
+                    <h3><i class="fas fa-server"></i> TIẾN TRÌNH CỦA BẠN</h3>
+                    <div id="list"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let TOKEN = localStorage.getItem('nexus_token');
+        // Logic JS tích hợp từ bản v10
+        let TOKEN = localStorage.getItem('nx_token');
         if(TOKEN) showApp();
 
         async function auth(type) {
             const u = document.getElementById('l-user').value;
             const p = document.getElementById('l-pass').value;
-            if(!u || !p) return alert("Vui lòng nhập đủ thông tin!");
-
             const res = await fetch(`/api/${type}`, {
                 method: 'POST', headers: {'Content-Type':'application/json'},
                 body: JSON.stringify({username: u, password: p})
             });
             const data = await res.json();
-            
             if(data.success) {
                 if(type === 'login') {
-                    localStorage.setItem('nexus_token', data.token);
-                    localStorage.setItem('nexus_user', data.username);
-                    TOKEN = data.token;
-                    showApp();
-                } else {
-                    alert(data.msg);
-                }
-            } else {
-                document.getElementById('auth-msg').innerText = data.msg;
-            }
+                    localStorage.setItem('nx_token', data.token);
+                    localStorage.setItem('nx_user', data.username);
+                    location.reload();
+                } else alert(data.msg);
+            } else alert(data.msg);
         }
 
         function showApp() {
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
-            document.getElementById('u-name').innerText = localStorage.getItem('nexus_user');
-            setInterval(fetchData, 1000);
+            document.getElementById('u-display').innerText = "User: " + localStorage.getItem('nx_user');
+            setInterval(fetchData, 1500);
         }
 
-        function logout() {
-            localStorage.clear();
-            location.reload();
-        }
+        function logout() { localStorage.clear(); location.reload(); }
 
         async function start() {
             const body = {
                 tokens: document.getElementById('tokens').value,
                 channels: document.getElementById('channels').value,
                 message: document.getElementById('message').value,
-                proxy: document.getElementById('proxy').value,
                 delay: Number(document.getElementById('delay').value),
-                count: Number(document.getElementById('count').value)
+                count: 0, proxy: ""
             };
-
             const res = await fetch('/api/start', {
-                method: 'POST', headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${TOKEN}`},
+                method: 'POST', headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${localStorage.getItem('nx_token')}`},
                 body: JSON.stringify(body)
             });
             const data = await res.json();
-            if(data.success) {
-                alert(data.msg);
-                document.getElementById('tokens').value = ''; 
-            } else alert(data.error);
-        }
-
-        async function control(action, id = null) {
-            await fetch('/api/control', {
-                method: 'POST', headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${TOKEN}`},
-                body: JSON.stringify({ action, id })
-            });
+            if(data.success) { alert(data.msg); document.getElementById('tokens').value = ''; }
         }
 
         async function fetchData() {
-            try {
-                const res = await fetch('/api/status', { headers: { 'Authorization': `Bearer ${TOKEN}` } });
-                if(res.status === 403) logout();
-                const data = await res.json();
-                render(data);
-            } catch(e) {}
+            const res = await fetch('/api/status', { headers: { 'Authorization': `Bearer ${localStorage.getItem('nx_token')}` } });
+            if(res.status === 403) logout();
+            const data = await res.json();
+            render(data);
         }
 
         function render(data) {
             const list = document.getElementById('list');
-            let html = '';
-            data.forEach(p => {
-                const logs = p.logs.map(l => `<div style="color:${l.type==='error'?'#f44':l.type==='success'?'#0f0':'#aaa'}">[${l.time}] ${l.msg}</div>`).reverse().join('');
-                html += `
+            list.innerHTML = data.map(p => `
                 <div class="proc-item" style="border-color:${p.running?'#0f0':'#f44'}">
                     <div class="proc-header">
-                        <span>${p.mask}</span>
-                        <button class="btn-del" onclick="control('delete', '${p.id}')"><i class="fas fa-times"></i></button>
+                        <span><i class="fas fa-key"></i> ${p.mask}</span>
+                        <span style="color:${p.running?'#0f0':'#f44'}">${p.running?'ONLINE':'STOPPED'}</span>
                     </div>
-                    <div style="font-size:12px; color:#aaa; margin-bottom:5px; display:flex; gap:10px;">
-                        <span>Sent: <b style="color:#0f0">${p.stats.sent}</b></span>
-                        <span>Fail: <b style="color:#f44">${p.stats.fail}</b></span>
-                        <span>Chan: ${p.config.channels}</span>
-                    </div>
-                    <div class="proc-logs">${logs}</div>
-                </div>`;
-            });
-            list.innerHTML = html || '<div style="text-align:center; color:#666; margin-top:20px;">Chưa có task nào...</div>';
+                    <div style="font-size:12px; color:#aaa; margin-top:5px">Sent: ${p.stats.sent} | Fail: ${p.stats.fail}</div>
+                    <div class="proc-logs">${p.logs.map(l => `<div>[${l.time}] ${l.msg}</div>`).reverse().join('')}</div>
+                </div>
+            `).join('');
         }
     </script>
 </body>
