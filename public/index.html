@@ -1,278 +1,220 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS v9.0 | Secure Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #a12d7b; --secondary: #0066cc; --accent: #4da6ff;
-            --bg-dark: #050505; --card-bg: rgba(10, 10, 10, 0.8);
-            --glass: rgba(20, 20, 20, 0.6); --text-main: #f0f0f0;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Geist', sans-serif; }
-        body { background: var(--bg-dark); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
-
-        /* VIDEO BACKGROUND */
-        .video-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover; z-index: -1; opacity: 0.3;
-        }
-
-        /* --- LOGIN SCREEN --- */
-        .auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-            backdrop-filter: blur(10px);
-        }
-        .auth-box {
-            background: var(--card-bg); padding: 40px; border-radius: 20px;
-            border: 1px solid var(--primary); width: 400px; text-align: center;
-            box-shadow: 0 0 50px rgba(161, 45, 123, 0.3);
-        }
-        .hidden { display: none !important; }
-
-        /* SIDEBAR */
-        .sidebar {
-            width: 260px; background: var(--glass); backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(30, 144, 255, 0.2);
-            padding: 20px; display: flex; flex-direction: column;
-        }
-        .logo { font-size: 1.5rem; font-weight: 800; margin-bottom: 40px; color: var(--accent); }
-        .nav-item {
-            padding: 15px; margin-bottom: 10px; border-radius: 10px; cursor: pointer;
-            transition: 0.3s; color: #888; font-weight: 500;
-        }
-        .nav-item:hover, .nav-item.active { background: rgba(30, 144, 255, 0.15); color: var(--primary); }
-        
-        /* MAIN CONTENT */
-        .main { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
-        .grid { display: grid; gap: 20px; }
-        .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-        .grid-2 { grid-template-columns: 350px 1fr; }
-
-        .card {
-            background: var(--card-bg); backdrop-filter: blur(10px);
-            border: 1px solid rgba(30, 144, 255, 0.2); border-radius: 15px; padding: 25px;
-        }
-        
-        /* FORMS */
-        label { display: block; margin-bottom: 8px; color: #aaa; font-size: 0.9rem; }
-        input, textarea, select {
-            width: 100%; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
-            color: white; padding: 12px; border-radius: 8px; outline: none; margin-bottom: 15px;
-        }
-        input:focus { border-color: var(--primary); }
-        
-        /* BUTTONS */
-        .btn {
-            width: 100%; padding: 12px; border: none; border-radius: 50px; font-weight: 700;
-            cursor: pointer; text-transform: uppercase; transition: 0.3s;
-            background: linear-gradient(90deg, var(--primary), var(--secondary)); color: white;
-        }
-        .btn:hover { box-shadow: 0 0 20px rgba(30, 144, 255, 0.5); }
-        .btn-danger { background: #ff4444; }
-
-        /* PROCESS LIST */
-        .proc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .proc-item {
-            background: rgba(0,0,0,0.6); padding: 15px; border-radius: 10px;
-            border-left: 3px solid var(--primary); position: relative;
-        }
-        .proc-logs {
-            height: 100px; overflow-y: auto; background: #000; padding: 8px; margin-top: 10px;
-            border-radius: 5px; font-family: monospace; font-size: 0.75rem; color: #0f0;
-        }
-        .proc-btn-del {
-            position: absolute; top: 10px; right: 10px; background: none; border: none;
-            color: #ff4444; cursor: pointer;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NEXUS Web Service</title>
+  <style>
+    :root { --bg:#0b1020; --card:#121a33; --line:#22305a; --text:#e8eeff; --sub:#90a4d6; }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    body{margin:0;background:var(--bg);color:var(--text);padding:24px}
+    .wrap{max-width:1100px;margin:0 auto;display:grid;gap:16px;grid-template-columns:380px 1fr}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+    h1{font-size:20px;margin:0 0 10px}
+    h2{font-size:14px;margin:0 0 10px;color:var(--sub);font-weight:600}
+    input,button{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0e1530;color:var(--text)}
+    input{margin:8px 0}
+    button{cursor:pointer;margin-top:8px;background:#345bff;border-color:#345bff;font-weight:700}
+    button.ghost{background:transparent;border-color:var(--line)}
+    button.danger{background:#ff3b3b;border-color:#ff3b3b}
+    .row{display:flex;gap:10px}
+    .row > *{flex:1}
+    .muted{color:var(--sub);font-size:12px;line-height:1.4}
+    .pill{display:inline-block;padding:4px 8px;border:1px solid var(--line);border-radius:999px;color:var(--sub);font-size:12px}
+    .jobs{display:grid;gap:10px}
+    .job{border:1px solid var(--line);border-radius:12px;padding:12px;background:#0e1530}
+    .jobhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .logs{margin-top:10px;background:#070b16;border:1px solid var(--line);border-radius:10px;padding:10px;height:120px;overflow:auto}
+    .logline{font-size:12px;margin:0 0 6px;color:#dbe6ff}
+    .ok{color:#68ff9b}
+    .warn{color:#ffd36a}
+    .err{color:#ff8a8a}
+    .hide{display:none}
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card">
+      <h1>NEXUS Web Service <span class="pill" id="pill">offline</span></h1>
+      <p class="muted">Deploy-ready cho Render. Có login/register + dashboard job demo.</p>
 
-    <video autoplay loop muted playsinline class="video-bg">
-        <source src="https://res.cloudinary.com/dwzczbbpr/video/upload/Violet_Dark_Blue_White_Anime_Music_Twitch_Background_1_et0ilf.mp4" type="video/mp4">
-    </video>
-
-    <div id="auth-screen" class="auth-overlay">
-        <div class="auth-box">
-            <h2 style="margin-bottom: 20px; color: var(--accent);">NEXUS LOGIN</h2>
-            <input type="text" id="l-user" placeholder="Username">
-            <input type="password" id="l-pass" placeholder="Password">
-            <button class="btn" onclick="login()">ĐĂNG NHẬP</button>
-            <button class="btn" style="background: transparent; border: 1px solid var(--primary); margin-top: 10px;" onclick="register()">ĐĂNG KÝ MỚI</button>
+      <div id="authBox">
+        <h2>Đăng nhập / Đăng ký</h2>
+        <input id="user" placeholder="username" />
+        <input id="pass" type="password" placeholder="password" />
+        <div class="row">
+          <button onclick="doLogin()">Đăng nhập</button>
+          <button class="ghost" onclick="doRegister()">Đăng ký</button>
         </div>
+        <p class="muted" id="authMsg"></p>
+      </div>
+
+      <div id="appBox" class="hide">
+        <h2>Điều khiển</h2>
+        <p class="muted">User: <b id="who"></b></p>
+
+        <input id="jobName" placeholder="Tên job (tuỳ chọn)" />
+        <button onclick="startJob()">Start job demo</button>
+
+        <div class="row">
+          <button class="ghost" onclick="refresh()">Refresh</button>
+          <button class="danger" onclick="stopAll()">Stop all</button>
+        </div>
+
+        <button class="ghost" onclick="logout()">Logout</button>
+        <p class="muted" id="appMsg"></p>
+      </div>
     </div>
 
-    <div id="app-screen" class="hidden" style="display: flex; width: 100%;">
-        <div class="sidebar">
-            <div class="logo"><i class="fas fa-shield-alt"></i> NEXUS v9.0</div>
-            <div class="nav-item active"><i class="fas fa-chart-pie"></i> Dashboard</div>
-            <div style="margin-top: auto;">
-                <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</div>
-                <div style="font-size: 12px; color: #666; padding: 10px;">User: <span id="user-display" style="color: var(--primary)">...</span></div>
-            </div>
-        </div>
-
-        <div class="main">
-            <div class="header">
-                <h2>DASHBOARD QUẢN LÝ</h2>
-                <button class="btn btn-danger" style="width: auto; padding: 10px 20px;" onclick="stopAll()">STOP ALL</button>
-            </div>
-
-            <div class="grid-2">
-                <div class="card">
-                    <h3><i class="fas fa-plus-circle"></i> THÊM TÁC VỤ</h3>
-                    <label>Danh sách Token</label>
-                    <textarea id="tokens" placeholder="Dán token (mỗi dòng 1 cái)"></textarea>
-                    
-                    <label>Danh sách Kênh</label>
-                    <textarea id="channels" rows="2" placeholder="ID kênh..."></textarea>
-                    
-                    <label>Nội dung</label>
-                    <textarea id="message" rows="2" placeholder="Nội dung..."></textarea>
-                    
-                    <label>Proxy (Optional)</label>
-                    <input type="text" id="proxy" placeholder="user:pass@ip:port">
-
-                    <div style="display: flex; gap: 10px;">
-                        <input type="number" id="delay" value="5" placeholder="Delay">
-                        <input type="number" id="count" value="0" placeholder="Count">
-                    </div>
-
-                    <button class="btn" onclick="startTask()">CHẠY NGAY</button>
-                </div>
-
-                <div class="card">
-                    <h3><i class="fas fa-server"></i> TIẾN TRÌNH CỦA BẠN</h3>
-                    <div id="process-list" class="proc-list"></div>
-                </div>
-            </div>
-        </div>
+    <div class="card">
+      <h2>Jobs</h2>
+      <div class="jobs" id="jobs"></div>
     </div>
+  </div>
 
-    <script>
-        let TOKEN = localStorage.getItem('nexus_token');
-        let USER = localStorage.getItem('nexus_user');
+<script>
+  let token = localStorage.getItem("token") || "";
+  let username = localStorage.getItem("username") || "";
 
-        if(TOKEN) showApp();
+  const pill = document.getElementById("pill");
+  const authBox = document.getElementById("authBox");
+  const appBox = document.getElementById("appBox");
+  const who = document.getElementById("who");
+  const authMsg = document.getElementById("authMsg");
+  const appMsg = document.getElementById("appMsg");
+  const jobsEl = document.getElementById("jobs");
 
-        async function login() {
-            const u = document.getElementById('l-user').value;
-            const p = document.getElementById('l-pass').value;
-            const r = await fetch('/api/login', {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ username: u, password: p })
-            });
-            const d = await r.json();
-            if(d.success) {
-                TOKEN = d.token; USER = d.username;
-                localStorage.setItem('nexus_token', TOKEN);
-                localStorage.setItem('nexus_user', USER);
-                showApp();
-            } else alert(d.msg);
-        }
+  function setOnline(ok){
+    pill.textContent = ok ? "online" : "offline";
+    pill.style.opacity = ok ? 1 : 0.6;
+  }
 
-        async function register() {
-            const u = document.getElementById('l-user').value;
-            const p = document.getElementById('l-pass').value;
-            const r = await fetch('/api/register', {
-                method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ username: u, password: p })
-            });
-            const d = await r.json();
-            alert(d.msg);
-        }
+  async function health(){
+    try{
+      const r = await fetch("/health");
+      setOnline(r.ok);
+    }catch(e){
+      setOnline(false);
+    }
+  }
 
-        function logout() {
-            localStorage.clear();
-            location.reload();
-        }
+  function setAuthed(isAuthed){
+    authBox.classList.toggle("hide", isAuthed);
+    appBox.classList.toggle("hide", !isAuthed);
+    if(isAuthed){
+      who.textContent = username || "...";
+    }
+  }
 
-        function showApp() {
-            document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.remove('hidden');
-            document.getElementById('user-display').innerText = USER;
-            setInterval(fetchData, 1000);
-        }
+  async function api(path, opts={}){
+    const headers = opts.headers || {};
+    if(token) headers["Authorization"] = "Bearer " + token;
+    headers["Content-Type"] = "application/json";
+    const r = await fetch(path, { ...opts, headers });
+    return r.json();
+  }
 
-        async function startTask() {
-            const payload = {
-                tokens: document.getElementById('tokens').value,
-                channels: document.getElementById('channels').value,
-                message: document.getElementById('message').value,
-                proxy: document.getElementById('proxy').value,
-                delay: parseFloat(document.getElementById('delay').value),
-                count: parseInt(document.getElementById('count').value)
-            };
+  async function doRegister(){
+    authMsg.textContent = "";
+    const u = document.getElementById("user").value.trim();
+    const p = document.getElementById("pass").value.trim();
+    const res = await api("/api/register", { method:"POST", body: JSON.stringify({username:u,password:p}) });
+    authMsg.textContent = res.msg || (res.success ? "OK" : "Fail");
+  }
 
-            const r = await fetch('/api/start', {
-                method: 'POST', 
-                headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${TOKEN}`},
-                body: JSON.stringify(payload)
-            });
-            const d = await r.json();
-            if(d.success) {
-                alert(d.msg);
-                document.getElementById('tokens').value = ''; // Xóa token sau khi gửi để bảo mật
-            } else alert(d.error);
-        }
+  async function doLogin(){
+    authMsg.textContent = "";
+    const u = document.getElementById("user").value.trim();
+    const p = document.getElementById("pass").value.trim();
+    const res = await api("/api/login", { method:"POST", body: JSON.stringify({username:u,password:p}) });
+    if(res.success){
+      token = res.token;
+      username = res.username;
+      localStorage.setItem("token", token);
+      localStorage.setItem("username", username);
+      setAuthed(true);
+      await refresh();
+    }else{
+      authMsg.textContent = res.msg || "Login fail";
+    }
+  }
 
-        async function stopAll() {
-            await fetch('/api/stop', {
-                method: 'POST', 
-                headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${TOKEN}`},
-                body: JSON.stringify({ all: true })
-            });
-        }
+  function logout(){
+    token = "";
+    username = "";
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    setAuthed(false);
+    jobsEl.innerHTML = "";
+  }
 
-        async function deleteProc(id) {
-            await fetch('/api/delete', {
-                method: 'POST', 
-                headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${TOKEN}`},
-                body: JSON.stringify({ id })
-            });
-        }
+  async function startJob(){
+    appMsg.textContent = "";
+    const name = document.getElementById("jobName").value.trim();
+    const res = await api("/api/start", { method:"POST", body: JSON.stringify({ name }) });
+    appMsg.textContent = res.msg || (res.success ? "Started" : "Fail");
+    await refresh();
+  }
 
-        async function fetchData() {
-            if(!TOKEN) return;
-            try {
-                const r = await fetch('/api/status', {
-                    headers: { 'Authorization': `Bearer ${TOKEN}` }
-                });
-                if(r.status === 403) logout();
-                const data = await r.json();
-                render(data);
-            } catch(e) {}
-        }
+  async function stopAll(){
+    await api("/api/control", { method:"POST", body: JSON.stringify({ action:"stop_all" }) });
+    await refresh();
+  }
 
-        function render(data) {
-            const container = document.getElementById('process-list');
-            let html = '';
-            data.forEach(p => {
-                const logs = p.logs.map(l => `<div style="color:${l.type==='error'?'#f44':l.type==='success'?'#0f0':'#ccc'}">[${l.time}] ${l.msg}</div>`).reverse().join('');
-                html += `
-                <div class="proc-item" style="border-color:${p.running?'#0f0':'#f44'}">
-                    <div style="display:flex; justify-content:space-between; color:#4da6ff; font-weight:bold; margin-bottom:5px;">
-                        <span><i class="fas fa-key"></i> ${p.mask}</span>
-                        <button class="proc-btn-del" onclick="deleteProc('${p.id}')"><i class="fas fa-times"></i></button>
-                    </div>
-                    <div style="font-size:0.8rem; color:#aaa; display:flex; gap:15px;">
-                        <span>Sent: <b style="color:#0f0">${p.stats.sent}</b></span>
-                        <span>Fail: <b style="color:#f44">${p.stats.fail}</b></span>
-                        <span>Chan: ${p.config.channels}</span>
-                    </div>
-                    <div class="proc-logs">${logs}</div>
-                </div>`;
-            });
-            container.innerHTML = html || '<div style="text-align:center; color:#666;">Chưa có task nào...</div>';
-        }
-    </script>
+  async function control(id, action){
+    await api("/api/control", { method:"POST", body: JSON.stringify({ id, action }) });
+    await refresh();
+  }
+
+  function cls(type){
+    if(type==="success") return "ok";
+    if(type==="warning") return "warn";
+    if(type==="error") return "err";
+    return "";
+  }
+
+  async function refresh(){
+    if(!token) return;
+    const list = await api("/api/status", { method:"GET" });
+    if(Array.isArray(list)){
+      jobsEl.innerHTML = list.map(j => `
+        <div class="job">
+          <div class="jobhead">
+            <div>
+              <div class="mono">${j.id}</div>
+              <div class="muted">name: <b>${j.name || "demo-job"}</b> • running: <b>${j.running}</b></div>
+              <div class="muted">ok: <b>${j.stats?.ok ?? 0}</b> • fail: <b>${j.stats?.fail ?? 0}</b></div>
+            </div>
+            <div style="min-width:140px">
+              <button class="ghost" onclick="control('${j.id}','stop')">Stop</button>
+              <button class="danger" onclick="control('${j.id}','delete')">Delete</button>
+            </div>
+          </div>
+          <div class="logs">
+            ${(j.logs||[]).slice().reverse().map(x => `<div class="logline ${cls(x.type)}">[${x.time}] ${x.msg}</div>`).join("")}
+          </div>
+        </div>
+      `).join("");
+    }else{
+      // token hết hạn/ lỗi auth
+      appMsg.textContent = list.error || "Auth error";
+      if(list.error) logout();
+    }
+  }
+
+  // boot
+  (async function init(){
+    await health();
+    if(token && username){
+      setAuthed(true);
+      await refresh();
+    }else{
+      setAuthed(false);
+    }
+    setInterval(health, 8000);
+    setInterval(() => { if(token) refresh(); }, 2500);
+  })();
+</script>
 </body>
 </html>
