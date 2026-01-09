@@ -6,7 +6,23 @@ const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static('public')); // Phục vụ file trong thư mục public
+app.use(express.static(__dirname)); // Phục vụ file trong thư mục public
+
+// ... Code cũ ...
+app.use(express.static('public'));
+
+// === THÊM ĐOẠN NÀY VÀO ===
+app.get('/', (req, res) => {
+    // Kiểm tra xem file index.html nằm ở đâu
+    // Trường hợp 1: Nếu bạn để trong thư mục public (khuyên dùng)
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    
+    // Trường hợp 2: Nếu bạn lỡ để index.html ngay bên ngoài (cùng cấp server.js)
+    // Thì đổi dòng trên thành: res.sendFile(path.join(__dirname, 'index.html'));
+});
+// ==========================
+
+// ... Các API khác giữ nguyên ...
 
 // ============ STATE MANAGEMENT ============
 // Lưu trữ trạng thái các tiến trình đang chạy
