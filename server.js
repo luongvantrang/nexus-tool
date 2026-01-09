@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
-// Khởi tạo Database người dùng
+// Tự động tạo file database nếu chưa có
 if (!fs.existsSync(DB_FILE)) {
     fs.writeFileSync(DB_FILE, JSON.stringify({}));
 }
@@ -26,7 +26,7 @@ function getUsers() {
     catch { return {}; } 
 }
 
-// Middleware xác thực JWT
+// Middleware xác thực phiên đăng nhập
 function auth(req, res, next) {
     const token = req.headers['authorization']?.split(' ')[1];
     if (!token) return res.status(401).json({ error: 'Vui lòng đăng nhập!' });
@@ -38,7 +38,7 @@ function auth(req, res, next) {
     });
 }
 
-const processes = {}; // Lưu trữ tiến trình trong RAM
+const processes = {}; 
 
 function log(id, msg, type = 'info') {
     if (!processes[id]) return;
@@ -47,7 +47,7 @@ function log(id, msg, type = 'info') {
     processes[id].logs.push({ time, msg, type });
 }
 
-// --- API AUTH ---
+// --- API HỆ THỐNG TÀI KHOẢN ---
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
     const users = getUsers();
@@ -69,16 +69,16 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-// --- API TOOL (Đã cô lập dữ liệu theo User) ---
+// --- API QUẢN LÝ TIẾN TRÌNH ---
 app.get('/api/status', auth, (req, res) => {
     const myProcs = Object.values(processes).filter(p => p.owner === req.user.username);
     res.json(myProcs.map(p => ({
         id: p.id,
-        mask: p.token.substring(0, 10) + '****************', // Bảo mật token
+        mask: p.token.substring(0, 10) + '****************', // Che dấu token gốc
         running: p.running,
         stats: p.stats,
         logs: p.logs,
-        config: { ...p.config, channels: p.config.channels.length }
+        config: { channels: p.config.channels.length, delay: p.config.delay }
     })));
 });
 
@@ -99,7 +99,7 @@ app.post('/api/start', auth, (req, res) => {
         };
         runWorker(id, message);
     });
-    res.json({ success: true, msg: `Đã khởi chạy ${tokenList.length} tài khoản!` });
+    res.json({ success: true, msg: `Đã chạy ${tokenList.length} tài khoản!` });
 });
 
 app.post('/api/control', auth, (req, res) => {
@@ -113,7 +113,7 @@ app.post('/api/control', auth, (req, res) => {
     res.json({ success: true });
 });
 
-// --- CORE WORKER ENGINE ---
+// --- ENGINE GỬI TIN NHẮN ---
 async function runWorker(id, msgRaw) {
     const p = processes[id];
     const msgs = msgRaw.split('\n').filter(x => x);
@@ -124,7 +124,7 @@ async function runWorker(id, msgRaw) {
         for (const cid of p.config.channels) {
             if (!p.running) break;
             try {
-                // Typing effect
+                // Giả lập Typing
                 await axios.post(`https://discord.com/api/v9/channels/${cid}/typing`, {}, {
                     headers: { authorization: p.token, 'User-Agent': ua }, httpsAgent: agent
                 }).catch(()=>{});
@@ -155,5 +155,5 @@ async function runWorker(id, msgRaw) {
     }
 }
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ NEXUS v10 ONLINE: http://localhost:${PORT}`));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`✅ SERVER ONLINE: http://localhost:${PORT}`));
