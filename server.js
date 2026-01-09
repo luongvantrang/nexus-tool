@@ -9,37 +9,49 @@ const { HttpsProxyAgent } = require('https-proxy-agent');
 const UserAgent = require('fake-useragent');
 
 const app = express();
-const SECRET_KEY = "nexus_v10_super_secret_key"; 
-const DB_FILE = path.join(__dirname, 'users.json');
+const SECRET_KEY = "nexus_super_secret_key_change_me"; // Khóa bảo mật JWT
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
-// Tự động tạo file database nếu chưa có
-if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify({}));
+// === DATABASE GIẢ LẬP (Lưu vào file JSON để không mất nick khi tắt server) ===
+const DB_FILE = 'users.json';
+if (!fs.existsSync(DB_FILE)) fs.writeFileSync(DB_FILE, JSON.stringify({}));
+
+function getUsers() { return JSON.parse(fs.readFileSync(DB_FILE)); }
+function saveUser(username, password) {
+    const users = getUsers();
+    if (users[username]) return false;
+    const hashedPassword = bcrypt.hashSync(password, 8);
+    users[username] = { password: hashedPassword, created: Date.now() };
+    fs.writeFileSync(DB_FILE, JSON.stringify(users));
+    return true;
+}
+function verifyUser(username, password) {
+    const users = getUsers();
+    if (!users[username]) return false;
+    return bcrypt.compareSync(password, users[username].password);
 }
 
-function getUsers() { 
-    try { return JSON.parse(fs.readFileSync(DB_FILE)); } 
-    catch { return {}; } 
-}
+// === STATE MANAGEMENT (RAM) ===
+// Cấu trúc: processes[processID] = { owner: 'user1', token: '...', ... }
+const processes = {};
 
-// Middleware xác thực phiên đăng nhập
-function auth(req, res, next) {
-    const token = req.headers['authorization']?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Vui lòng đăng nhập!' });
+// === MIDDLEWARE AUTH ===
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Chưa đăng nhập!' });
 
     jwt.verify(token, SECRET_KEY, (err, user) => {
         if (err) return res.status(403).json({ error: 'Phiên đăng nhập hết hạn!' });
-        req.user = user;
+        req.user = user; // user.username
         next();
     });
 }
 
-const processes = {}; 
-
+// === LOGIC ===
 function log(id, msg, type = 'info') {
     if (!processes[id]) return;
     const time = new Date().toLocaleTimeString('en-GB');
@@ -47,113 +59,171 @@ function log(id, msg, type = 'info') {
     processes[id].logs.push({ time, msg, type });
 }
 
-// --- API HỆ THỐNG TÀI KHOẢN ---
+// === AUTH ROUTES ===
 app.post('/api/register', (req, res) => {
     const { username, password } = req.body;
-    const users = getUsers();
-    if (users[username]) return res.json({ success: false, msg: 'Tài khoản đã tồn tại!' });
-    
-    users[username] = { password: bcrypt.hashSync(password, 8), created: Date.now() };
-    fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
-    res.json({ success: true, msg: 'Đăng ký thành công!' });
+    if (!username || !password) return res.json({ success: false, msg: 'Thiếu thông tin!' });
+    if (saveUser(username, password)) res.json({ success: true, msg: 'Đăng ký thành công!' });
+    else res.json({ success: false, msg: 'Tài khoản đã tồn tại!' });
 });
 
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
-    const users = getUsers();
-    if (users[username] && bcrypt.compareSync(password, users[username].password)) {
-        const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: '7d' });
+    if (verifyUser(username, password)) {
+        const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: '24h' });
         res.json({ success: true, token, username });
     } else {
         res.json({ success: false, msg: 'Sai tài khoản hoặc mật khẩu!' });
     }
 });
 
-// --- API QUẢN LÝ TIẾN TRÌNH ---
-app.get('/api/status', auth, (req, res) => {
-    const myProcs = Object.values(processes).filter(p => p.owner === req.user.username);
-    res.json(myProcs.map(p => ({
+// === APP ROUTES (Bảo vệ bằng authenticateToken) ===
+
+// Lấy danh sách (CHỈ TRẢ VỀ CỦA NGƯỜI DÙNG ĐÓ)
+app.get('/api/status', authenticateToken, (req, res) => {
+    const userProc = Object.values(processes).filter(p => p.owner === req.user.username);
+    
+    // Mask token để bảo mật (Frontend không bao giờ nhìn thấy token gốc)
+    const safeData = userProc.map(p => ({
         id: p.id,
-        mask: p.token.substring(0, 10) + '****************', // Che dấu token gốc
+        mask: p.token.substring(0, 10) + '****************' + p.token.substring(p.token.length - 5),
         running: p.running,
         stats: p.stats,
         logs: p.logs,
-        config: { channels: p.config.channels.length, delay: p.config.delay }
-    })));
+        config: { ...p.config, channels: p.config.channels.length } // Ẩn chi tiết thừa
+    }));
+    res.json(safeData);
 });
 
-app.post('/api/start', auth, (req, res) => {
+app.post('/api/start', authenticateToken, (req, res) => {
     const { tokens, channels, message, delay, count, proxy } = req.body;
+    if (!tokens || !channels || !message) return res.json({ error: 'Thiếu dữ liệu!' });
+
     const tokenList = tokens.split('\n').map(t => t.trim()).filter(t => t);
     const channelList = channels.split(/[\n,]+/).map(c => c.trim()).filter(c => c);
 
+    let started = 0;
     tokenList.forEach(token => {
-        const id = `${req.user.username}_${token.substring(0, 10)}`;
-        if (processes[id] && processes[id].running) return;
+        // Tạo ID duy nhất cho mỗi task dựa trên user + token (tránh trùng lặp)
+        const procId = `${req.user.username}_${token.substring(0, 10)}`;
+        
+        if (processes[procId] && processes[procId].running) return;
 
-        processes[id] = {
-            id, owner: req.user.username, token,
-            running: true, logs: [],
+        processes[procId] = {
+            id: procId,
+            owner: req.user.username, // Đánh dấu chủ sở hữu
+            token: token,
+            running: true,
+            logs: [],
             stats: { sent: 0, fail: 0, uptime: Date.now() },
             config: { channels: channelList, delay, count, proxy }
         };
-        runWorker(id, message);
+        
+        log(procId, `🚀 Khởi động task cho ${channelList.length} kênh`, 'success');
+        runWorker(procId, message);
+        started++;
     });
-    res.json({ success: true, msg: `Đã chạy ${tokenList.length} tài khoản!` });
+
+    res.json({ success: true, msg: `Đã khởi chạy ${started} tài khoản!` });
 });
 
-app.post('/api/control', auth, (req, res) => {
-    const { id, action } = req.body;
-    if (action === 'stop_all') {
-        Object.values(processes).forEach(p => { if (p.owner === req.user.username) p.running = false; });
-    } else if (processes[id] && processes[id].owner === req.user.username) {
+app.post('/api/stop', authenticateToken, (req, res) => {
+    const { id, all } = req.body;
+    
+    if (all) {
+        Object.values(processes).forEach(p => {
+            if (p.owner === req.user.username) p.running = false;
+        });
+        return res.json({ success: true });
+    }
+
+    if (processes[id] && processes[id].owner === req.user.username) {
         processes[id].running = false;
-        if (action === 'delete') delete processes[id];
+        log(id, '🛑 Người dùng đã dừng', 'warning');
     }
     res.json({ success: true });
 });
 
-// --- ENGINE GỬI TIN NHẮN ---
-async function runWorker(id, msgRaw) {
-    const p = processes[id];
+app.post('/api/delete', authenticateToken, (req, res) => {
+    const { id } = req.body;
+    if (processes[id] && processes[id].owner === req.user.username) {
+        processes[id].running = false;
+        delete processes[id];
+    }
+    res.json({ success: true });
+});
+
+// === WORKER ===
+async function runWorker(procId, msgRaw) {
+    const p = processes[procId];
+    if (!p) return;
+
     const msgs = msgRaw.split('\n').filter(x => x);
-    let agent = p.config.proxy ? new HttpsProxyAgent(p.config.proxy) : null;
+    let agent = null;
+    
+    if (p.config.proxy) {
+        try {
+            agent = new HttpsProxyAgent(p.config.proxy.startsWith('http') ? p.config.proxy : `http://${p.config.proxy}`);
+        } catch(e) {
+            log(procId, 'Lỗi Proxy', 'error');
+        }
+    }
+
     let ua = new UserAgent().toString();
 
     while (p.running) {
-        for (const cid of p.config.channels) {
+        for (const channelId of p.config.channels) {
             if (!p.running) break;
+            
+            if (p.config.count > 0 && p.stats.sent >= p.config.count) {
+                p.running = false;
+                log(procId, '✅ Hoàn thành số lượng', 'success');
+                break;
+            }
+
+            const content = msgs[Math.floor(Math.random() * msgs.length)];
+            
             try {
                 // Giả lập Typing
-                await axios.post(`https://discord.com/api/v9/channels/${cid}/typing`, {}, {
-                    headers: { authorization: p.token, 'User-Agent': ua }, httpsAgent: agent
-                }).catch(()=>{});
-                
-                await new Promise(r => setTimeout(r, 1500));
+                await axios.post(`https://discord.com/api/v9/channels/${channelId}/typing`, {}, {
+                    headers: { authorization: p.token, 'User-Agent': ua },
+                    httpsAgent: agent
+                }).catch(() => {});
 
-                const content = msgs[Math.floor(Math.random() * msgs.length)];
-                await axios.post(`https://discord.com/api/v9/channels/${cid}/messages`, {
-                    content, nonce: Date.now().toString()
+                await new Promise(r => setTimeout(r, 1000 + Math.random() * 1500)); 
+
+                // Gửi tin nhắn
+                await axios.post(`https://discord.com/api/v9/channels/${channelId}/messages`, {
+                    content: content, nonce: Date.now().toString()
                 }, {
                     headers: { authorization: p.token, 'Content-Type': 'application/json', 'User-Agent': ua },
                     httpsAgent: agent
                 });
 
                 p.stats.sent++;
-                log(id, `📤 Gửi thành công kênh ...${cid.slice(-4)}`, 'success');
+                log(procId, `📤 Gửi #${channelId.slice(-4)}: ${content.slice(0, 10)}...`, 'success');
+                
             } catch (e) {
                 p.stats.fail++;
-                if (e.response?.status === 429) {
+                const status = e.response?.status;
+                if (status === 401 || status === 403) {
+                    p.running = false;
+                    log(procId, '💀 Token Die/Invalid', 'error');
+                } else if (status === 429) {
                     const wait = (e.response.data.retry_after || 5) * 1000;
-                    log(id, `⏳ Rate Limit! Chờ ${wait/1000}s`, 'warning');
+                    log(procId, `⏳ Rate Limit ${wait/1000}s`, 'warning');
                     await new Promise(r => setTimeout(r, wait));
+                } else {
+                    log(procId, `❌ Lỗi: ${status}`, 'error');
                 }
             }
-            await new Promise(r => setTimeout(r, 2000));
+            // Delay giữa các kênh của 1 acc (tránh bị flag spam)
+            await new Promise(r => setTimeout(r, 2000)); 
         }
-        await new Promise(r => setTimeout(r, p.config.delay * 1000));
+        // Delay vòng lặp lớn
+        const jitter = p.config.delay * (0.8 + Math.random() * 0.4);
+        await new Promise(r => setTimeout(r, jitter * 1000));
     }
 }
 
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`✅ SERVER ONLINE: http://localhost:${PORT}`));
+app.listen(3000, () => console.log('🚀 Nexus V9 Security Core Online: http://localhost:3000'));
