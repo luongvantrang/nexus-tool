@@ -7,123 +7,148 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    body { background: linear-gradient(135deg, #0a0a14, #1a1a2e); }
-    .card { transition: all 0.3s; }
-    .card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.4); }
-    .avatar { border: 3px solid #00ffaa; box-shadow: 0 0 25px #00ffaa50; }
-    .search-input { background: #16213e; border: 2px solid #00ffaa30; }
-    .search-input:focus { border-color: #00ffaa; outline: none; }
+    body { background: #0a0a14; font-family: 'Segoe UI', sans-serif; }
+    .card {
+      background: linear-gradient(145deg, #1a1f2e, #0f1321);
+      border: 1px solid #00ffaa30;
+      box-shadow: 0 10px 30px rgba(0, 255, 170, 0.1);
+    }
+    .neon-border {
+      border: 2px solid transparent;
+      background: linear-gradient(white, white) padding-box,
+                  linear-gradient(90deg, #00ffaa, #00b8ff) border-box;
+      animation: neon 2s linear infinite;
+    }
+    @keyframes neon {
+      0% { box-shadow: 0 0 10px #00ffaa; }
+      50% { box-shadow: 0 0 25px #00ffaa; }
+      100% { box-shadow: 0 0 10px #00ffaa; }
+    }
+    .top-gradient { background: linear-gradient(to right, #00b8ff, #ff00aa); }
   </style>
 </head>
-<body class="text-gray-200 p-6">
+<body class="min-h-screen p-6">
   <div class="max-w-7xl mx-auto">
-    <h1 class="text-5xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
-      👑 ATLANTIS TRACKSTAT v3
+    <h1 class="text-4xl font-bold text-center mb-10 text-white tracking-widest">
+      👑 ATLANTIS <span class="text-cyan-400">TRACKSTAT</span>
     </h1>
 
-    <!-- Thanh Tìm Kiếm -->
-    <div class="max-w-md mx-auto mb-10">
+    <!-- Thanh tìm kiếm -->
+    <div class="max-w-xl mx-auto mb-8">
       <div class="relative">
-        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
-        <input 
-          type="text" 
-          id="searchInput"
-          placeholder="Tìm kiếm tên nhân vật..." 
-          class="search-input w-full pl-11 pr-4 py-3 rounded-2xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400">
+        <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-cyan-400"></i>
+        <input id="searchInput" 
+               type="text" 
+               placeholder="Tìm kiếm tên nhân vật..." 
+               class="w-full bg-[#16213e] text-white pl-12 pr-6 py-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-cyan-400 text-lg">
       </div>
     </div>
 
-    <div id="accounts" class="grid grid-cols-1 lg:grid-cols-2 gap-8"></div>
-
-    <div class="text-center text-gray-500 mt-12 text-sm">
-      Cập nhật tự động mỗi 6 giây • Atlantis TrackStat v3
-    </div>
+    <div id="accounts" class="grid grid-cols-1 xl:grid-cols-2 gap-8"></div>
   </div>
 
   <script>
-    let allAccounts = {};
+    let allData = {};
 
     async function loadData() {
       try {
         const res = await fetch('/api/data');
-        allAccounts = await res.json();
-        renderAccounts(allAccounts);
-      } catch (e) {
-        console.log("Chưa có dữ liệu");
-      }
+        allData = await res.json();
+        render(allData);
+      } catch(e) {}
     }
 
-    function renderAccounts(accounts) {
+    function render(data) {
       const container = document.getElementById('accounts');
       container.innerHTML = '';
 
-      if (Object.keys(accounts).length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 text-xl col-span-3 py-20">Chưa có dữ liệu...</p>`;
-        return;
-      }
-
-      Object.values(accounts).forEach(acc => {
-        const html = `
-          <div class="card bg-[#16213e] rounded-3xl overflow-hidden">
-            <div class="h-3 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500"></div>
-            
-            <div class="p-8 flex gap-8">
+      Object.values(data).forEach(acc => {
+        const card = document.createElement('div');
+        card.className = "card rounded-3xl overflow-hidden";
+        card.innerHTML = `
+          <div class="top-gradient h-2"></div>
+          <div class="p-8 flex gap-8">
+            <div class="neon-border rounded-2xl p-1">
               <img src="https://www.roblox.com/headshot-thumbnail/image?userId=${acc.userid}&width=420&height=420&format=png" 
-                   class="avatar w-32 h-32 rounded-2xl flex-shrink-0">
+                   class="w-40 h-40 rounded-2xl">
+            </div>
+            
+            <div class="flex-1">
+              <h2 class="text-4xl font-bold text-white">${acc.player}</h2>
+              <p class="text-cyan-400 text-xl">Level ${acc.level} • ${acc.race || 'Unknown'}</p>
 
-              <div class="flex-1">
-                <h2 class="text-3xl font-bold text-white">${acc.player}</h2>
-                <p class="text-cyan-400">Level ${acc.level} • ${acc.race || 'Unknown'}</p>
-
-                <div class="grid grid-cols-2 gap-x-10 gap-y-5 mt-8 text-sm">
-                  <div><span class="text-gray-400">💰 Beli:</span> <span class="font-bold text-yellow-300">${acc.beli}</span></div>
-                  <div><span class="text-gray-400">🟣 Frag:</span> <span class="font-bold text-purple-300">${acc.frag}</span></div>
-                  <div><span class="text-gray-400">🍎 Fruit:</span> <span class="font-bold">${acc.fruit || 'Không'}</span></div>
-                  <div><span class="text-gray-400">⚔️ Sword:</span> <span class="font-bold">${acc.sword || 'Không'}</span></div>
-                  <div><span class="text-gray-400">🥊 Fighting:</span> <span class="font-bold">${acc.fighting || 'Không'}</span></div>
-                  <div><span class="text-gray-400">🌟 Aura:</span> <span class="font-bold">${acc.aura || 'Không'}</span></div>
+              <div class="mt-8 grid grid-cols-2 gap-6">
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl">💰</span>
+                  <div>
+                    <div class="text-yellow-300 font-bold text-xl">${acc.beli}</div>
+                    <div class="text-xs text-gray-400">Beli</div>
+                  </div>
                 </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-2xl">🟣</span>
+                  <div>
+                    <div class="text-purple-300 font-bold text-xl">${acc.frag}</div>
+                    <div class="text-xs text-gray-400">Fragment</div>
+                  </div>
+                </div>
+              </div>
 
-                <div class="mt-8 pt-6 border-t border-gray-700 grid grid-cols-4 gap-4 text-center text-xs">
-                  <div><div class="text-red-400 text-2xl">❤️</div><div class="font-bold">${acc.heart || 0}</div><div class="text-gray-500">Heart</div></div>
-                  <div><div class="text-blue-400 text-2xl">🛡️</div><div class="font-bold">${acc.scale || 0}</div><div class="text-gray-500">Scale</div></div>
-                  <div><div class="text-purple-400 text-2xl">🌟</div><div class="font-bold">${acc.mythic || 0}</div><div class="text-gray-500">Mythic</div></div>
-                  <div><div class="text-yellow-400 text-2xl">⭐</div><div class="font-bold">${acc.legend || 0}</div><div class="text-gray-500">Legend</div></div>
+              <div class="mt-6 grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                <div><span class="text-gray-400">🍎 Fruit:</span> <span class="text-white">${acc.fruit || 'Không'}</span></div>
+                <div><span class="text-gray-400">⚔️ Sword:</span> <span class="text-white">${acc.sword || 'Không'}</span></div>
+                <div><span class="text-gray-400">🥊 Fighting:</span> <span class="text-white">${acc.fighting || 'Không'}</span></div>
+                <div><span class="text-gray-400">🌟 Aura:</span> <span class="text-white">${acc.aura || 'Không'}</span></div>
+              </div>
+
+              <div class="mt-10 flex justify-around border-t border-gray-700 pt-6">
+                <div class="text-center">
+                  <div class="text-4xl">❤️</div>
+                  <div class="text-2xl font-bold text-red-400">${acc.heart || 0}</div>
+                  <div class="text-xs text-gray-500">Heart</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-4xl">🛡️</div>
+                  <div class="text-2xl font-bold text-blue-400">${acc.scale || 0}</div>
+                  <div class="text-xs text-gray-500">Scale</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-4xl">🌟</div>
+                  <div class="text-2xl font-bold text-purple-400">${acc.mythic || 0}</div>
+                  <div class="text-xs text-gray-500">Mythic</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-4xl">⭐</div>
+                  <div class="text-2xl font-bold text-yellow-400">${acc.legend || 0}</div>
+                  <div class="text-xs text-gray-500">Legend</div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div class="bg-black/40 px-8 py-4 flex justify-between text-xs text-gray-400">
-              <div>FPS: <span class="text-emerald-400">${acc.fps}</span> • Ping: <span class="text-orange-400">${acc.ping}ms</span></div>
-              <div>Treo: <span class="text-cyan-400">${acc.treo}</span></div>
-              <div>${acc.lastUpdate}</div>
-            </div>
-          </div>`;
-        container.innerHTML += html;
+          <div class="bg-black/50 px-8 py-5 flex justify-between text-sm">
+            <div><span class="text-emerald-400">FPS:</span> ${acc.fps} • <span class="text-orange-400">Ping:</span> ${acc.ping}ms</div>
+            <div><span class="text-cyan-400">Treo:</span> ${acc.treo}</div>
+            <div class="text-gray-500">${acc.lastUpdate}</div>
+          </div>
+        `;
+        container.appendChild(card);
       });
     }
 
     // Tìm kiếm
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      const keyword = e.target.value.toLowerCase().trim();
-      
-      if (!keyword) {
-        renderAccounts(allAccounts);
-        return;
-      }
-
+    document.getElementById('searchInput').addEventListener('keyup', (e) => {
+      const term = e.target.value.toLowerCase();
       const filtered = {};
-      Object.keys(allAccounts).forEach(key => {
-        const acc = allAccounts[key];
-        if (acc.player && acc.player.toLowerCase().includes(keyword)) {
-          filtered[key] = acc;
+      Object.keys(allData).forEach(k => {
+        if (allData[k].player.toLowerCase().includes(term)) {
+          filtered[k] = allData[k];
         }
       });
-      renderAccounts(filtered);
+      render(filtered);
     });
 
-    // Tự động cập nhật
-    setInterval(loadData, 6000);
+    setInterval(loadData, 7000);
     loadData();
   </script>
 </body>
