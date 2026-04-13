@@ -1,19 +1,11 @@
 import { kv } from '@vercel/kv';
 
-export default async function handler(request, response) {
-  // Lấy userid từ URL (?userid=12345)
-  const userId = request.query.userid;
+export default async function handler(req, res) {
+  const { userid } = req.query;
 
-  if (!userId) {
-    return response.status(400).send('Missing userid');
-  }
+  if (!userid) return res.status(400).send('Missing userid');
 
-  // Kiểm tra xem userid có trong "set" tên là 'whitelist' không
-  const isWhitelisted = await kv.sismember('whitelist', userId);
+  const isAllowed = await kv.sismember('whitelist', userid);
 
-  if (isWhitelisted) {
-    return response.status(200).send('true');
-  } else {
-    return response.status(200).send('false');
-  }
+  return res.status(200).send(isAllowed ? 'true' : 'false');
 }
