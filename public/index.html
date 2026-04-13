@@ -1,54 +1,84 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Tool - Get Key</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #fff; text-align: center; padding: 50px; }
-        .box { background: #1a1a2e; padding: 30px; border-radius: 12px; max-width: 500px; margin: 0 auto; }
-        input { width: 80%; padding: 12px; margin: 10px 0; border: none; border-radius: 6px; font-size: 16px; }
-        button { padding: 12px 30px; background: #00ff9d; color: black; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        #result { margin-top: 20px; font-size: 18px; font-weight: bold; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atlantis TrackStat</title>
+  <style>
+    body { margin:0; font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #ddd; }
+    .container { max-width: 900px; margin: 30px auto; padding: 20px; }
+    h1 { text-align: center; color: #00ffaa; }
+    .card { background: #1a1a2e; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+    .stat { font-size: 18px; margin: 8px 0; }
+    .label { color: #00ddff; font-weight: bold; }
+    .value { color: #fff; float: right; }
+    .footer { text-align: center; margin-top: 30px; color: #555; font-size: 14px; }
+    .last-update { text-align: center; color: #888; margin-top: 10px; }
+  </style>
 </head>
 <body>
-    <div class="box">
-        <h1>🔑 Nexus Tool Key System</h1>
-        <p>Vui lòng lấy key từ link quảng cáo trước.</p>
-        
-        <input type="text" id="userid" placeholder="Nhập Roblox UserID" /><br>
-        <input type="text" id="key" placeholder="Nhập Key" /><br><br>
-        <button onclick="submitKey()">Xác Nhận Key</button>
-        <p id="result"></p>
+  <div class="container">
+    <h1>👑 ATLANTIS TRACKSTAT</h1>
+    
+    <div class="card">
+      <h2>👤 Nhân Vật</h2>
+      <div class="grid">
+        <div class="stat"><span class="label">Người chơi:</span> <span id="player" class="value">-</span></div>
+        <div class="stat"><span class="label">Level:</span> <span id="level" class="value">-</span></div>
+        <div class="stat"><span class="label">Beli:</span> <span id="beli" class="value">-</span></div>
+        <div class="stat"><span class="label">Fragment:</span> <span id="frag" class="value">-</span></div>
+      </div>
     </div>
 
-    <script>
-        async function submitKey() {
-            const userid = document.getElementById('userid').value.trim();
-            const key = document.getElementById('key').value.trim();
-            const result = document.getElementById('result');
+    <div class="card">
+      <h2>📦 Kho Vật Phẩm</h2>
+      <div class="grid">
+        <div class="stat"><span class="label">❤️ Levi Heart:</span> <span id="heart" class="value">-</span></div>
+        <div class="stat"><span class="label">🟦 Levi Scale:</span> <span id="scale" class="value">-</span></div>
+        <div class="stat"><span class="label">🌟 Mythic Scroll:</span> <span id="mythic" class="value">-</span></div>
+        <div class="stat"><span class="label">⭐ Legendary Scroll:</span> <span id="legend" class="value">-</span></div>
+      </div>
+    </div>
 
-            if (!userid || !key) {
-                result.style.color = 'orange';
-                result.textContent = '❌ Vui lòng nhập đầy đủ UserID và Key!';
-                return;
-            }
+    <div class="card">
+      <h2>🖥️ Hệ Thống</h2>
+      <div class="grid">
+        <div class="stat"><span class="label">FPS:</span> <span id="fps" class="value">-</span></div>
+        <div class="stat"><span class="label">Ping:</span> <span id="ping" class="value">-</span></div>
+        <div class="stat"><span class="label">Thời gian treo:</span> <span id="treo" class="value">-</span></div>
+      </div>
+    </div>
 
-            result.style.color = 'yellow';
-            result.textContent = 'Đang kiểm tra...';
+    <div class="last-update">Cập nhật lần cuối: <span id="time">-</span></div>
+    <div class="footer">Atlantis TrackStat • Made for you</div>
+  </div>
 
-            const res = await fetch(`/api/submit?userid=${userid}&key=${key}`);
-            const text = await res.text();
+  <script>
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        
+        document.getElementById('player').textContent = data.player || '-';
+        document.getElementById('level').textContent = data.level || '-';
+        document.getElementById('beli').textContent = data.beli || '-';
+        document.getElementById('frag').textContent = data.frag || '-';
+        document.getElementById('heart').textContent = data.heart || '0';
+        document.getElementById('scale').textContent = data.scale || '0';
+        document.getElementById('mythic').textContent = data.mythic || '0';
+        document.getElementById('legend').textContent = data.legend || '0';
+        document.getElementById('fps').textContent = data.fps || '-';
+        document.getElementById('ping').textContent = data.ping || '-';
+        document.getElementById('treo').textContent = data.treo || '-';
+        document.getElementById('time').textContent = data.lastUpdate || 'Chưa có dữ liệu';
+      } catch(e) {
+        console.log("Chưa có dữ liệu");
+      }
+    }
 
-            if (res.ok) {
-                result.style.color = '#00ff9d';
-                result.textContent = '✅ ' + text;
-            } else {
-                result.style.color = 'red';
-                result.textContent = '❌ ' + text;
-            }
-        }
-    </script>
+    setInterval(fetchData, 5000); // Cập nhật mỗi 5 giây
+    fetchData();
+  </script>
 </body>
 </html>
