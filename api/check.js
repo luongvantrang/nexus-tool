@@ -1,11 +1,18 @@
 import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
-  const { userid } = req.query;
+  try {
+    const { userid } = req.query;
+    
+    if (!userid) {
+      return res.status(400).send('Missing userid');
+    }
 
-  if (!userid) return res.status(400).send('Missing userid');
-
-  const isAllowed = await kv.sismember('whitelist', userid);
-
-  return res.status(200).send(isAllowed ? 'true' : 'false');
+    const isWhitelisted = await kv.sismember('whitelist', userid.toString());
+    
+    return res.status(200).send(isWhitelisted ? 'true' : 'false');
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send('Server error');
+  }
 }
