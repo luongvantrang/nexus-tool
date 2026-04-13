@@ -6,13 +6,13 @@ export default async function handler(req, res) {
   try {
     const stats = req.body;
     const key = `account_${stats.userid}`;
-    
+
     stats.lastUpdate = new Date().toLocaleString('vi-VN');
-    
-    await kv.set(key, stats, { ex: 7200 }); // lưu 2 tiếng
+    stats.lastRaw    = new Date().toISOString(); // Track online/offline
+
+    await kv.set(key, stats, { ex: 7200 });
     res.status(200).send('OK');
   } catch (err) {
-    console.error(err);
     res.status(500).send('Error');
   }
 }
