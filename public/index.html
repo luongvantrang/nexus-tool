@@ -9,9 +9,7 @@
   <style>
     body { background: #05060f; }
     .neon-card { background: #0f1321; border: 2px solid transparent; background-image: linear-gradient(#0f1321, #0f1321), linear-gradient(90deg, #00ffff, #ff00ff); background-origin: border-box; background-clip: padding-box, border-box; }
-    .avatar-box { border: 3px solid #00ffff; box-shadow: 0 0 35px #00ffff80; background: #1a2333; }
-    .avatar { transition: all 0.4s; }
-    .avatar-error { filter: brightness(0.6); }
+    .avatar-box { border: 4px solid #00ffff; box-shadow: 0 0 40px #00ffff90; background: #111827; }
   </style>
 </head>
 <body class="text-gray-200 p-6">
@@ -35,17 +33,16 @@
         const res = await fetch('/api/data');
         allAccounts = await res.json();
         renderAccounts(allAccounts);
-      } catch(e) { console.log("Lỗi tải dữ liệu"); }
+      } catch(e) {}
+    }
+
+    function getAvatarUrl(userId) {
+      return `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`;
     }
 
     function renderAccounts(accounts) {
       const container = document.getElementById('accounts');
       container.innerHTML = '';
-
-      if (Object.keys(accounts).length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 text-2xl py-20">Chưa có dữ liệu...</p>`;
-        return;
-      }
 
       Object.values(accounts).forEach(acc => {
         const card = document.createElement('div');
@@ -54,16 +51,16 @@
           <div class="h-3 bg-gradient-to-r from-cyan-400 to-pink-500"></div>
           <div class="p-8 flex gap-8">
             <!-- Avatar -->
-            <div class="avatar-box w-44 h-44 rounded-2xl overflow-hidden flex-shrink-0">
-              <img src="https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${acc.userid}&size=420x420&format=Png&isCircular=false" 
-                   class="avatar w-full h-full object-cover"
-                   onerror="this.src='https://i.imgur.com/4f7v7zL.png'; this.classList.add('avatar-error');">
+            <div class="avatar-box w-52 h-52 rounded-3xl overflow-hidden flex-shrink-0">
+              <img src="${getAvatarUrl(acc.userid)}" 
+                   class="w-full h-full object-cover"
+                   onerror="this.onerror=null; this.src='https://i.imgur.com/4f7v7zL.png';">
             </div>
 
             <!-- Thông tin -->
             <div class="flex-1">
               <h2 class="text-4xl font-bold text-white">${acc.player}</h2>
-              <p class="text-cyan-400 text-xl">Level ${acc.level} • ${acc.race || 'Unknown'}</p>
+              <p class="text-cyan-400 text-xl mt-1">Level ${acc.level} • ${acc.race || 'Unknown'}</p>
 
               <div class="mt-8 flex gap-12">
                 <div>
@@ -107,7 +104,9 @@
       const keyword = e.target.value.toLowerCase();
       const filtered = {};
       Object.keys(allAccounts).forEach(k => {
-        if (allAccounts[k].player.toLowerCase().includes(keyword)) filtered[k] = allAccounts[k];
+        if (allAccounts[k].player.toLowerCase().includes(keyword)) {
+          filtered[k] = allAccounts[k];
+        }
       });
       renderAccounts(filtered);
     });
