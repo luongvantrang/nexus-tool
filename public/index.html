@@ -8,8 +8,18 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     body { background: #05060f; }
-    .neon-card { background: #0f1321; border: 2px solid transparent; background-image: linear-gradient(#0f1321, #0f1321), linear-gradient(90deg, #00ffff, #ff00ff); background-origin: border-box; background-clip: padding-box, border-box; }
-    .avatar-box { border: 4px solid #00ffff; box-shadow: 0 0 40px #00ffff90; background: #111827; }
+    .neon-card {
+      background: #0f1321;
+      border: 2px solid transparent;
+      background-image: linear-gradient(#0f1321, #0f1321), linear-gradient(90deg, #00ffff, #ff00ff);
+      background-origin: border-box;
+      background-clip: padding-box, border-box;
+    }
+    .avatar-box {
+      border: 4px solid #00ffff;
+      box-shadow: 0 0 40px #00ffff90;
+      background: #111827;
+    }
   </style>
 </head>
 <body class="text-gray-200 p-6">
@@ -17,7 +27,7 @@
     <h1 class="text-5xl font-bold text-center mb-10 text-cyan-400">👑 ATLANTIS TRACKSTAT</h1>
 
     <div class="max-w-xl mx-auto mb-10">
-      <input id="searchInput" type="text" 
+      <input id="searchInput" type="text"
              class="w-full bg-[#0f1321] border border-cyan-400/30 focus:border-cyan-400 rounded-3xl py-4 px-6 text-lg outline-none"
              placeholder="🔎 Tìm kiếm tên nhân vật...">
     </div>
@@ -36,13 +46,14 @@
       } catch(e) {}
     }
 
-    function getAvatarUrl(userId) {
-      return `https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=420x420&format=Png&isCircular=false`;
-    }
-
     function renderAccounts(accounts) {
       const container = document.getElementById('accounts');
       container.innerHTML = '';
+
+      if (Object.keys(accounts).length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-400 text-2xl py-20 col-span-2">Chưa có dữ liệu...</p>`;
+        return;
+      }
 
       Object.values(accounts).forEach(acc => {
         const card = document.createElement('div');
@@ -50,11 +61,14 @@
         card.innerHTML = `
           <div class="h-3 bg-gradient-to-r from-cyan-400 to-pink-500"></div>
           <div class="p-8 flex gap-8">
-            <!-- Avatar -->
+
+            <!-- ✅ Avatar dùng API proxy -->
             <div class="avatar-box w-52 h-52 rounded-3xl overflow-hidden flex-shrink-0">
-              <img src="${getAvatarUrl(acc.userid)}" 
-                   class="w-full h-full object-cover"
-                   onerror="this.onerror=null; this.src='https://i.imgur.com/4f7v7zL.png';">
+              <img 
+                src="/api/avatar?userid=${acc.userid}" 
+                class="w-full h-full object-cover"
+                onerror="this.onerror=null; this.src='https://i.imgur.com/4f7v7zL.png';"
+                loading="lazy">
             </div>
 
             <!-- Thông tin -->
@@ -65,31 +79,47 @@
               <div class="mt-8 flex gap-12">
                 <div>
                   <div class="text-yellow-300 text-3xl font-bold">💰 ${acc.beli}</div>
-                  <div class="text-xs text-gray-400">Beli</div>
+                  <div class="text-xs text-gray-400 mt-1">Beli</div>
                 </div>
                 <div>
                   <div class="text-purple-300 text-3xl font-bold">⭕ ${acc.frag}</div>
-                  <div class="text-xs text-gray-400">Fragment</div>
+                  <div class="text-xs text-gray-400 mt-1">Fragment</div>
                 </div>
               </div>
 
-              <div class="mt-8 grid grid-cols-2 gap-y-3 text-sm">
-                <div>🍎 Fruit: <span class="text-white">${acc.fruit || 'Không'}</span></div>
-                <div>⚔️ Sword: <span class="text-white">${acc.sword || 'Không'}</span></div>
-                <div>🥊 Fighting: <span class="text-white">${acc.fighting || 'Không'}</span></div>
-                <div>🌟 Aura: <span class="text-white">${acc.aura || 'Không'}</span></div>
+              <div class="mt-8 grid grid-cols-2 gap-y-4 text-sm">
+                <div>🍎 Fruit: <span class="text-white font-semibold">${acc.fruit || 'Không'}</span></div>
+                <div>⚔️ Sword: <span class="text-white font-semibold">${acc.sword || 'Không'}</span></div>
+                <div>🥊 Fighting: <span class="text-white font-semibold">${acc.fighting || 'Không'}</span></div>
+                <div>🌟 Aura: <span class="text-white font-semibold">${acc.aura || 'Không'}</span></div>
               </div>
 
               <div class="mt-10 flex justify-around border-t border-gray-700 pt-8">
-                <div class="text-center"><div class="text-5xl">❤️</div><div class="text-2xl font-bold text-red-400">${acc.heart || 0}</div><div class="text-xs text-gray-400">Heart</div></div>
-                <div class="text-center"><div class="text-5xl">🛡️</div><div class="text-2xl font-bold text-blue-400">${acc.scale || 0}</div><div class="text-xs text-gray-400">Scale</div></div>
-                <div class="text-center"><div class="text-5xl">🌟</div><div class="text-2xl font-bold text-purple-400">${acc.mythic || 0}</div><div class="text-xs text-gray-400">Mythic</div></div>
-                <div class="text-center"><div class="text-5xl">⭐</div><div class="text-2xl font-bold text-yellow-400">${acc.legend || 0}</div><div class="text-xs text-gray-400">Legend</div></div>
+                <div class="text-center">
+                  <div class="text-5xl">❤️</div>
+                  <div class="text-2xl font-bold text-red-400">${acc.heart || 0}</div>
+                  <div class="text-xs text-gray-400">Heart</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-5xl">🛡️</div>
+                  <div class="text-2xl font-bold text-blue-400">${acc.scale || 0}</div>
+                  <div class="text-xs text-gray-400">Scale</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-5xl">🌟</div>
+                  <div class="text-2xl font-bold text-purple-400">${acc.mythic || 0}</div>
+                  <div class="text-xs text-gray-400">Mythic</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-5xl">⭐</div>
+                  <div class="text-2xl font-bold text-yellow-400">${acc.legend || 0}</div>
+                  <div class="text-xs text-gray-400">Legend</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="bg-black/60 px-8 py-5 flex justify-between text-sm">
+          <div class="bg-black/60 px-8 py-5 flex justify-between text-sm border-t border-cyan-500/20">
             <div>FPS: <span class="text-emerald-400">${acc.fps}</span> • Ping: <span class="text-orange-400">${acc.ping}ms</span></div>
             <div>Treo: <span class="text-cyan-400">${acc.treo}</span></div>
             <div class="text-gray-500">${acc.lastUpdate}</div>
@@ -99,7 +129,6 @@
       });
     }
 
-    // Tìm kiếm
     document.getElementById('searchInput').addEventListener('input', (e) => {
       const keyword = e.target.value.toLowerCase();
       const filtered = {};
