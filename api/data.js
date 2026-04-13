@@ -2,9 +2,16 @@ import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
   try {
-    const data = await kv.get('atlantis_stats');
-    res.status(200).json(data || { lastUpdate: "Chưa có dữ liệu" });
+    const keys = await kv.keys('account_*');
+    const accounts = {};
+
+    for (const key of keys) {
+      const data = await kv.get(key);
+      if (data) accounts[data.userid] = data;
+    }
+
+    res.status(200).json(accounts);
   } catch (err) {
-    res.status(500).json({ error: "Lỗi server" });
+    res.status(500).json({});
   }
 }
