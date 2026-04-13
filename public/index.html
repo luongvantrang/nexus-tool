@@ -3,48 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lấy Key Script</title>
+    <title>Nexus Tool - Get Key</title>
     <style>
-        body { font-family: sans-serif; background: #2c2f33; color: #fff; text-align: center; padding-top: 50px; }
-        .container { background: #23272a; padding: 30px; border-radius: 8px; display: inline-block; }
-        input { padding: 10px; margin: 5px; border-radius: 5px; border: none; width: 250px; }
-        button { padding: 10px 20px; background: #7289da; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
-        #result { margin-top: 20px; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #fff; text-align: center; padding: 50px; }
+        .box { background: #1a1a2e; padding: 30px; border-radius: 12px; max-width: 500px; margin: 0 auto; }
+        input { width: 80%; padding: 12px; margin: 10px 0; border: none; border-radius: 6px; font-size: 16px; }
+        button { padding: 12px 30px; background: #00ff9d; color: black; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        #result { margin-top: 20px; font-size: 18px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Lấy Key Sử Dụng Script</h1>
-        <p>Vượt qua link [Linkvertise của bạn] để lấy Key!</p>
-        <input type="text" id="userid" placeholder="Nhập Roblox UserID của bạn">
-        <input type="text" id="key" placeholder="Nhập Key đã lấy">
-        <button onclick="submitKey()">Xác Nhận</button>
+    <div class="box">
+        <h1>🔑 Nexus Tool Key System</h1>
+        <p>Vui lòng lấy key từ link quảng cáo trước.</p>
+        
+        <input type="text" id="userid" placeholder="Nhập Roblox UserID" /><br>
+        <input type="text" id="key" placeholder="Nhập Key" /><br><br>
+        <button onclick="submitKey()">Xác Nhận Key</button>
         <p id="result"></p>
     </div>
 
     <script>
         async function submitKey() {
-            const userId = document.getElementById('userid').value;
-            const key = document.getElementById('key').value;
-            const resultEl = document.getElementById('result');
+            const userid = document.getElementById('userid').value.trim();
+            const key = document.getElementById('key').value.trim();
+            const result = document.getElementById('result');
 
-            if (!userId || !key) {
-                resultEl.textContent = 'Vui lòng nhập đủ UserID và Key!';
-                resultEl.style.color = 'orange';
+            if (!userid || !key) {
+                result.style.color = 'orange';
+                result.textContent = '❌ Vui lòng nhập đầy đủ UserID và Key!';
                 return;
             }
 
-            resultEl.textContent = 'Đang kiểm tra...';
-            
-            const response = await fetch(`/api/submit?userid=${userId}&key=${key}`);
-            const data = await response.text();
+            result.style.color = 'yellow';
+            result.textContent = 'Đang kiểm tra...';
 
-            if (response.ok) {
-                resultEl.textContent = data;
-                resultEl.style.color = 'lime';
+            const res = await fetch(`/api/submit?userid=${userid}&key=${key}`);
+            const text = await res.text();
+
+            if (res.ok) {
+                result.style.color = '#00ff9d';
+                result.textContent = '✅ ' + text;
             } else {
-                resultEl.textContent = data;
-                resultEl.style.color = 'red';
+                result.style.color = 'red';
+                result.textContent = '❌ ' + text;
             }
         }
     </script>
