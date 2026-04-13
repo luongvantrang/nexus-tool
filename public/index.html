@@ -1,1 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lấy Key Script</title>
+    <style>
+        body { font-family: sans-serif; background: #2c2f33; color: #fff; text-align: center; padding-top: 50px; }
+        .container { background: #23272a; padding: 30px; border-radius: 8px; display: inline-block; }
+        input { padding: 10px; margin: 5px; border-radius: 5px; border: none; width: 250px; }
+        button { padding: 10px 20px; background: #7289da; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+        #result { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lấy Key Sử Dụng Script</h1>
+        <p>Vượt qua link [Linkvertise của bạn] để lấy Key!</p>
+        <input type="text" id="userid" placeholder="Nhập Roblox UserID của bạn">
+        <input type="text" id="key" placeholder="Nhập Key đã lấy">
+        <button onclick="submitKey()">Xác Nhận</button>
+        <p id="result"></p>
+    </div>
 
+    <script>
+        async function submitKey() {
+            const userId = document.getElementById('userid').value;
+            const key = document.getElementById('key').value;
+            const resultEl = document.getElementById('result');
+
+            if (!userId || !key) {
+                resultEl.textContent = 'Vui lòng nhập đủ UserID và Key!';
+                resultEl.style.color = 'orange';
+                return;
+            }
+
+            resultEl.textContent = 'Đang kiểm tra...';
+            
+            const response = await fetch(`/api/submit?userid=${userId}&key=${key}`);
+            const data = await response.text();
+
+            if (response.ok) {
+                resultEl.textContent = data;
+                resultEl.style.color = 'lime';
+            } else {
+                resultEl.textContent = data;
+                resultEl.style.color = 'red';
+            }
+        }
+    </script>
+</body>
+</html>
