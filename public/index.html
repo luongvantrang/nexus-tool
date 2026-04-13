@@ -4,81 +4,89 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Atlantis TrackStat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    body { margin:0; font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #ddd; }
-    .container { max-width: 900px; margin: 30px auto; padding: 20px; }
-    h1 { text-align: center; color: #00ffaa; }
-    .card { background: #1a1a2e; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
-    .stat { font-size: 18px; margin: 8px 0; }
-    .label { color: #00ddff; font-weight: bold; }
-    .value { color: #fff; float: right; }
-    .footer { text-align: center; margin-top: 30px; color: #555; font-size: 14px; }
-    .last-update { text-align: center; color: #888; margin-top: 10px; }
+    body { background: linear-gradient(135deg, #0f0f1a, #1a1a2e); min-height: 100vh; }
+    .card { transition: all 0.3s; }
+    .card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3); }
+    .header { background: rgba(0, 255, 170, 0.1); backdrop-filter: blur(10px); }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h1>👑 ATLANTIS TRACKSTAT</h1>
-    
-    <div class="card">
-      <h2>👤 Nhân Vật</h2>
-      <div class="grid">
-        <div class="stat"><span class="label">Người chơi:</span> <span id="player" class="value">-</span></div>
-        <div class="stat"><span class="label">Level:</span> <span id="level" class="value">-</span></div>
-        <div class="stat"><span class="label">Beli:</span> <span id="beli" class="value">-</span></div>
-        <div class="stat"><span class="label">Fragment:</span> <span id="frag" class="value">-</span></div>
-      </div>
+<body class="text-gray-200">
+  <div class="max-w-7xl mx-auto p-6">
+    <div class="header rounded-2xl p-6 mb-8 flex justify-between items-center border border-cyan-500/20">
+      <h1 class="text-4xl font-bold text-cyan-400 flex items-center gap-3">
+        <i class="fa-solid fa-dragon"></i> ATLANTIS TRACKSTAT
+      </h1>
+      <p class="text-gray-400">Multi Account • Realtime</p>
     </div>
 
-    <div class="card">
-      <h2>📦 Kho Vật Phẩm</h2>
-      <div class="grid">
-        <div class="stat"><span class="label">❤️ Levi Heart:</span> <span id="heart" class="value">-</span></div>
-        <div class="stat"><span class="label">🟦 Levi Scale:</span> <span id="scale" class="value">-</span></div>
-        <div class="stat"><span class="label">🌟 Mythic Scroll:</span> <span id="mythic" class="value">-</span></div>
-        <div class="stat"><span class="label">⭐ Legendary Scroll:</span> <span id="legend" class="value">-</span></div>
-      </div>
+    <div id="accounts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Các account sẽ được thêm tự động -->
     </div>
 
-    <div class="card">
-      <h2>🖥️ Hệ Thống</h2>
-      <div class="grid">
-        <div class="stat"><span class="label">FPS:</span> <span id="fps" class="value">-</span></div>
-        <div class="stat"><span class="label">Ping:</span> <span id="ping" class="value">-</span></div>
-        <div class="stat"><span class="label">Thời gian treo:</span> <span id="treo" class="value">-</span></div>
-      </div>
+    <div class="text-center text-gray-500 mt-10 text-sm">
+      Cập nhật tự động mỗi 5 giây • Atlantis TrackStat v2
     </div>
-
-    <div class="last-update">Cập nhật lần cuối: <span id="time">-</span></div>
-    <div class="footer">Atlantis TrackStat • Made for you</div>
   </div>
 
   <script>
-    async function fetchData() {
-      try {
-        const res = await fetch('/api/data');
-        const data = await res.json();
-        
-        document.getElementById('player').textContent = data.player || '-';
-        document.getElementById('level').textContent = data.level || '-';
-        document.getElementById('beli').textContent = data.beli || '-';
-        document.getElementById('frag').textContent = data.frag || '-';
-        document.getElementById('heart').textContent = data.heart || '0';
-        document.getElementById('scale').textContent = data.scale || '0';
-        document.getElementById('mythic').textContent = data.mythic || '0';
-        document.getElementById('legend').textContent = data.legend || '0';
-        document.getElementById('fps').textContent = data.fps || '-';
-        document.getElementById('ping').textContent = data.ping || '-';
-        document.getElementById('treo').textContent = data.treo || '-';
-        document.getElementById('time').textContent = data.lastUpdate || 'Chưa có dữ liệu';
-      } catch(e) {
-        console.log("Chưa có dữ liệu");
+    async function loadData() {
+      const res = await fetch('/api/data');
+      const accounts = await res.json();
+
+      const container = document.getElementById('accounts');
+      container.innerHTML = '';
+
+      if (Object.keys(accounts).length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-400 text-xl col-span-3 py-20">Chưa có dữ liệu. Hãy chạy script...</p>`;
+        return;
       }
+
+      Object.values(accounts).forEach(acc => {
+        const html = `
+          <div class="card bg-[#16213e] border border-cyan-500/30 rounded-2xl overflow-hidden">
+            <div class="h-2 bg-gradient-to-r from-cyan-400 to-purple-500"></div>
+            <div class="p-6">
+              <div class="flex items-center gap-4 mb-6">
+                <img src="https://www.roblox.com/headshot-thumbnail/image?userId=${acc.userid}&width=420&height=420&format=png" 
+                     class="w-16 h-16 rounded-xl border-2 border-cyan-400">
+                <div>
+                  <h3 class="text-xl font-bold text-white">${acc.player}</h3>
+                  <p class="text-cyan-400 text-sm">Level ${acc.level}</p>
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <div class="flex justify-between"><span class="text-gray-400">💰 Beli</span><span class="font-semibold">${acc.beli}</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">🟣 Fragment</span><span class="font-semibold">${acc.frag}</span></div>
+                
+                <div class="pt-4 border-t border-gray-700 grid grid-cols-2 gap-4 text-sm">
+                  <div><span class="text-red-400">❤️</span> Levi Heart <span class="float-right font-bold">${acc.heart || 0}</span></div>
+                  <div><span class="text-blue-400">🛡️</span> Levi Scale <span class="float-right font-bold">${acc.scale || 0}</span></div>
+                  <div><span class="text-purple-400">🌟</span> Mythic <span class="float-right font-bold">${acc.mythic || 0}</span></div>
+                  <div><span class="text-yellow-400">⭐</span> Legendary <span class="float-right font-bold">${acc.legend || 0}</span></div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-700 text-xs text-gray-400 flex justify-between">
+                  <div>FPS: <span class="text-emerald-400">${acc.fps}</span></div>
+                  <div>Ping: <span class="text-orange-400">${acc.ping}ms</span></div>
+                  <div>Treo: <span class="text-cyan-400">${acc.treo}</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="bg-black/40 px-6 py-3 text-[10px] text-gray-500 flex justify-between">
+              <span>Cập nhật: ${acc.lastUpdate}</span>
+              <span class="text-cyan-500">ID: ${acc.userid}</span>
+            </div>
+          </div>`;
+        container.innerHTML += html;
+      });
     }
 
-    setInterval(fetchData, 5000); // Cập nhật mỗi 5 giây
-    fetchData();
+    setInterval(loadData, 5000);
+    loadData();
   </script>
 </body>
 </html>
