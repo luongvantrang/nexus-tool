@@ -7,85 +7,123 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    body { background: linear-gradient(135deg, #0f0f1a, #1a1a2e); min-height: 100vh; }
+    body { background: linear-gradient(135deg, #0a0a14, #1a1a2e); }
     .card { transition: all 0.3s; }
-    .card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.3); }
-    .header { background: rgba(0, 255, 170, 0.1); backdrop-filter: blur(10px); }
+    .card:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.4); }
+    .avatar { border: 3px solid #00ffaa; box-shadow: 0 0 25px #00ffaa50; }
+    .search-input { background: #16213e; border: 2px solid #00ffaa30; }
+    .search-input:focus { border-color: #00ffaa; outline: none; }
   </style>
 </head>
-<body class="text-gray-200">
-  <div class="max-w-7xl mx-auto p-6">
-    <div class="header rounded-2xl p-6 mb-8 flex justify-between items-center border border-cyan-500/20">
-      <h1 class="text-4xl font-bold text-cyan-400 flex items-center gap-3">
-        <i class="fa-solid fa-dragon"></i> ATLANTIS TRACKSTAT
-      </h1>
-      <p class="text-gray-400">Multi Account • Realtime</p>
+<body class="text-gray-200 p-6">
+  <div class="max-w-7xl mx-auto">
+    <h1 class="text-5xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+      👑 ATLANTIS TRACKSTAT v3
+    </h1>
+
+    <!-- Thanh Tìm Kiếm -->
+    <div class="max-w-md mx-auto mb-10">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-gray-400"></i>
+        <input 
+          type="text" 
+          id="searchInput"
+          placeholder="Tìm kiếm tên nhân vật..." 
+          class="search-input w-full pl-11 pr-4 py-3 rounded-2xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400">
+      </div>
     </div>
 
-    <div id="accounts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Các account sẽ được thêm tự động -->
-    </div>
+    <div id="accounts" class="grid grid-cols-1 lg:grid-cols-2 gap-8"></div>
 
-    <div class="text-center text-gray-500 mt-10 text-sm">
-      Cập nhật tự động mỗi 5 giây • Atlantis TrackStat v2
+    <div class="text-center text-gray-500 mt-12 text-sm">
+      Cập nhật tự động mỗi 6 giây • Atlantis TrackStat v3
     </div>
   </div>
 
   <script>
-    async function loadData() {
-      const res = await fetch('/api/data');
-      const accounts = await res.json();
+    let allAccounts = {};
 
+    async function loadData() {
+      try {
+        const res = await fetch('/api/data');
+        allAccounts = await res.json();
+        renderAccounts(allAccounts);
+      } catch (e) {
+        console.log("Chưa có dữ liệu");
+      }
+    }
+
+    function renderAccounts(accounts) {
       const container = document.getElementById('accounts');
       container.innerHTML = '';
 
       if (Object.keys(accounts).length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 text-xl col-span-3 py-20">Chưa có dữ liệu. Hãy chạy script...</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 text-xl col-span-3 py-20">Chưa có dữ liệu...</p>`;
         return;
       }
 
       Object.values(accounts).forEach(acc => {
         const html = `
-          <div class="card bg-[#16213e] border border-cyan-500/30 rounded-2xl overflow-hidden">
-            <div class="h-2 bg-gradient-to-r from-cyan-400 to-purple-500"></div>
-            <div class="p-6">
-              <div class="flex items-center gap-4 mb-6">
-                <img src="https://www.roblox.com/headshot-thumbnail/image?userId=${acc.userid}&width=420&height=420&format=png" 
-                     class="w-16 h-16 rounded-xl border-2 border-cyan-400">
-                <div>
-                  <h3 class="text-xl font-bold text-white">${acc.player}</h3>
-                  <p class="text-cyan-400 text-sm">Level ${acc.level}</p>
-                </div>
-              </div>
+          <div class="card bg-[#16213e] rounded-3xl overflow-hidden">
+            <div class="h-3 bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500"></div>
+            
+            <div class="p-8 flex gap-8">
+              <img src="https://www.roblox.com/headshot-thumbnail/image?userId=${acc.userid}&width=420&height=420&format=png" 
+                   class="avatar w-32 h-32 rounded-2xl flex-shrink-0">
 
-              <div class="space-y-4">
-                <div class="flex justify-between"><span class="text-gray-400">💰 Beli</span><span class="font-semibold">${acc.beli}</span></div>
-                <div class="flex justify-between"><span class="text-gray-400">🟣 Fragment</span><span class="font-semibold">${acc.frag}</span></div>
-                
-                <div class="pt-4 border-t border-gray-700 grid grid-cols-2 gap-4 text-sm">
-                  <div><span class="text-red-400">❤️</span> Levi Heart <span class="float-right font-bold">${acc.heart || 0}</span></div>
-                  <div><span class="text-blue-400">🛡️</span> Levi Scale <span class="float-right font-bold">${acc.scale || 0}</span></div>
-                  <div><span class="text-purple-400">🌟</span> Mythic <span class="float-right font-bold">${acc.mythic || 0}</span></div>
-                  <div><span class="text-yellow-400">⭐</span> Legendary <span class="float-right font-bold">${acc.legend || 0}</span></div>
+              <div class="flex-1">
+                <h2 class="text-3xl font-bold text-white">${acc.player}</h2>
+                <p class="text-cyan-400">Level ${acc.level} • ${acc.race || 'Unknown'}</p>
+
+                <div class="grid grid-cols-2 gap-x-10 gap-y-5 mt-8 text-sm">
+                  <div><span class="text-gray-400">💰 Beli:</span> <span class="font-bold text-yellow-300">${acc.beli}</span></div>
+                  <div><span class="text-gray-400">🟣 Frag:</span> <span class="font-bold text-purple-300">${acc.frag}</span></div>
+                  <div><span class="text-gray-400">🍎 Fruit:</span> <span class="font-bold">${acc.fruit || 'Không'}</span></div>
+                  <div><span class="text-gray-400">⚔️ Sword:</span> <span class="font-bold">${acc.sword || 'Không'}</span></div>
+                  <div><span class="text-gray-400">🥊 Fighting:</span> <span class="font-bold">${acc.fighting || 'Không'}</span></div>
+                  <div><span class="text-gray-400">🌟 Aura:</span> <span class="font-bold">${acc.aura || 'Không'}</span></div>
                 </div>
 
-                <div class="pt-4 border-t border-gray-700 text-xs text-gray-400 flex justify-between">
-                  <div>FPS: <span class="text-emerald-400">${acc.fps}</span></div>
-                  <div>Ping: <span class="text-orange-400">${acc.ping}ms</span></div>
-                  <div>Treo: <span class="text-cyan-400">${acc.treo}</span></div>
+                <div class="mt-8 pt-6 border-t border-gray-700 grid grid-cols-4 gap-4 text-center text-xs">
+                  <div><div class="text-red-400 text-2xl">❤️</div><div class="font-bold">${acc.heart || 0}</div><div class="text-gray-500">Heart</div></div>
+                  <div><div class="text-blue-400 text-2xl">🛡️</div><div class="font-bold">${acc.scale || 0}</div><div class="text-gray-500">Scale</div></div>
+                  <div><div class="text-purple-400 text-2xl">🌟</div><div class="font-bold">${acc.mythic || 0}</div><div class="text-gray-500">Mythic</div></div>
+                  <div><div class="text-yellow-400 text-2xl">⭐</div><div class="font-bold">${acc.legend || 0}</div><div class="text-gray-500">Legend</div></div>
                 </div>
               </div>
             </div>
-            <div class="bg-black/40 px-6 py-3 text-[10px] text-gray-500 flex justify-between">
-              <span>Cập nhật: ${acc.lastUpdate}</span>
-              <span class="text-cyan-500">ID: ${acc.userid}</span>
+
+            <div class="bg-black/40 px-8 py-4 flex justify-between text-xs text-gray-400">
+              <div>FPS: <span class="text-emerald-400">${acc.fps}</span> • Ping: <span class="text-orange-400">${acc.ping}ms</span></div>
+              <div>Treo: <span class="text-cyan-400">${acc.treo}</span></div>
+              <div>${acc.lastUpdate}</div>
             </div>
           </div>`;
         container.innerHTML += html;
       });
     }
 
-    setInterval(loadData, 5000);
+    // Tìm kiếm
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const keyword = e.target.value.toLowerCase().trim();
+      
+      if (!keyword) {
+        renderAccounts(allAccounts);
+        return;
+      }
+
+      const filtered = {};
+      Object.keys(allAccounts).forEach(key => {
+        const acc = allAccounts[key];
+        if (acc.player && acc.player.toLowerCase().includes(keyword)) {
+          filtered[key] = acc;
+        }
+      });
+      renderAccounts(filtered);
+    });
+
+    // Tự động cập nhật
+    setInterval(loadData, 6000);
     loadData();
   </script>
 </body>
