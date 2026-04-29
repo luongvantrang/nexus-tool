@@ -20,8 +20,6 @@
     ::-webkit-scrollbar-track { background: #0f1117; }
     ::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
-    
-    /* Custom select dropdown */
     select option { background: #16181f; color: #e5e7eb; }
   </style>
 </head>
@@ -136,7 +134,7 @@
 
     function isOnline(acc) {
       const last = new Date(acc.lastRaw || 0);
-      return (Date.now() - last.getTime()) < 60000; // Sửa lại thành 60s cho an toàn
+      return (Date.now() - last.getTime()) < 60000;
     }
 
     function fmtNum(n) {
@@ -182,7 +180,7 @@
           ? `<span class="online-dot mr-2" title="Online"></span>` 
           : `<span class="offline-dot mr-2" title="Offline"></span>`;
 
-        // 1. TẠO DROPDOWN VŨ KHÍ TỰ ĐỘNG
+        // TẠO DROPDOWN VŨ KHÍ TỰ ĐỘNG
         let weaponOptions = '<option value="">-- Chọn VK / Hệ --</option>';
         if (acc.weapon_list && acc.weapon_list.length > 0) {
             let sortedList = [...acc.weapon_list].sort((a,b) => b.mastery - a.mastery);
@@ -255,12 +253,15 @@
             </td>
 
             <td class="px-4 py-4 text-center">
-              <div class="flex flex-col gap-2 items-center">
-                <select id="cmd-${acc.userid}" class="bg-[#0f1117] border border-[#2a2d3a] text-gray-300 text-[11px] rounded p-1.5 outline-none w-36 focus:border-cyan-500 transition-colors">
+              <div class="flex flex-col gap-1 items-center">
+                <select id="cmd-${acc.userid}" class="bg-[#0f1117] border border-[#2a2d3a] text-gray-300 text-[11px] rounded p-1 outline-none w-36 focus:border-cyan-500 transition-colors mb-1">
                   ${weaponOptions}
                 </select>
-                <button onclick="executeSwap('${acc.userid}')" class="w-36 bg-cyan-600/20 hover:bg-cyan-600 border border-cyan-500/50 text-cyan-400 hover:text-white text-[10px] font-bold py-1.5 px-3 rounded transition-all flex items-center justify-center gap-1">
-                  <i class="fa-solid fa-bolt"></i> THỰC THI (2500 F)
+                <button onclick="sendCommand('${acc.userid}', 'equip_weapon')" class="w-36 bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/50 text-emerald-400 hover:text-white text-[10px] font-bold py-1 px-2 rounded transition-all flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-hand-fist"></i> TRANG BỊ NHANH
+                </button>
+                <button onclick="sendCommand('${acc.userid}', 'swap_build')" class="w-36 bg-cyan-600/20 hover:bg-cyan-600 border border-cyan-500/50 text-cyan-400 hover:text-white text-[10px] font-bold py-1 px-2 rounded transition-all flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-bolt"></i> TẨY ĐIỂM & ĐỔI HỆ
                 </button>
               </div>
             </td>
@@ -270,25 +271,30 @@
       }).join('');
     }
 
-    // 2. HÀM THỰC THI LỆNH GỬI LÊN VERCEL KV
-    async function executeSwap(userid) {
+    // --- HÀM THỰC THI LỆNH GỬI LÊN VERCEL KV ---
+    async function sendCommand(userid, action) {
       const selectEl = document.getElementById(`cmd-${userid}`);
       const selectedVal = selectEl.value;
       
       if (!selectedVal) {
-        alert('⚠️ Vui lòng chọn vũ khí / hệ trước khi thực thi!');
+        alert('⚠️ Vui lòng chọn vũ khí trước!');
         return;
       }
       
       const [weapon, stat] = selectedVal.split('|');
       
-      if (!confirm(`Tài khoản ID: ${userid}\nXác nhận tẩy điểm (tốn 2500 Frag), max điểm vào [${stat}] và trang bị [${weapon}]?`)) return;
+      // Hiển thị cảnh báo xác nhận dựa theo loại lệnh
+      if (action === 'swap_build') {
+        if (!confirm(`Xác nhận TẨY ĐIỂM (tốn 2500 Frag), max điểm vào [${stat}] và trang bị [${weapon}]?`)) return;
+      } else {
+        if (!confirm(`Xác nhận TRANG BỊ NHANH vũ khí [${weapon}]? (Không tẩy điểm)`)) return;
+      }
 
       try {
         const res = await fetch(`${API_COMMAND}?userid=${userid}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'swap_build', weapon: weapon, main_stat: stat })
+          body: JSON.stringify({ action: action, weapon: weapon, main_stat: stat })
         });
         
         if (res.ok) {
@@ -307,7 +313,6 @@
         const res = await fetch(API_DATA);
         allAccounts = await res.json();
         
-        // Cập nhật lại UI dựa trên dữ liệu mới (chỉ render nếu không đang search)
         const keyword = document.getElementById('searchInput').value.trim();
         if(!keyword) {
             updateOverview(allAccounts);
@@ -329,7 +334,7 @@
       renderTable(filtered);
     });
 
-    // Khởi chạy vòng lặp
+    // Khởi chạy
     setInterval(loadData, 5000);
     loadData();
   </script>
