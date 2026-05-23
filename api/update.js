@@ -6,29 +6,32 @@ export default async function handler(req, res) {
   }
 
   try {
-    const stats = req.body;
+    // Parse body an toàn (phòng khi không tự parse)
+    let stats = req.body;
+    if (typeof stats === 'string') {
+      stats = JSON.parse(stats);
+    }
 
-    // Validate
     if (!stats || !stats.userid) {
+      console.error('[UPDATE] Missing userid. Body:', JSON.stringify(req.body));
       return res.status(400).send('Missing userid');
     }
 
     const userid = String(stats.userid);
     const key = `account_${userid}`;
 
-    // Thêm timestamp
     stats.lastUpdate = new Date().toLocaleString('vi-VN');
     stats.lastRaw    = new Date().toISOString();
 
-    // Lưu data + add vào Set index (song song cho nhanh)
     await Promise.all([
-      kv.set(key, stats, { ex: 7200 }),       // Data hết hạn sau 2h
-      kv.sadd('account_ids', userid)           // Index không hết hạn
+      kv.set(key, stats, { ex: 7200 }),
+      kv.sadd('account_ids', userid)
     ]);
 
+    console.log(`[UPDATE] Saved account ${userid} (${stats.player})`);
     return res.status(200).send('OK');
   } catch (err) {
-    console.error('[UPDATE ERROR]', err);
-    return res.status(500).send('Error');
+    console.error('[UPDATE ERROR]', err.message);
+    return res.status(500).send('Error: ' + err.message);
   }
 }
