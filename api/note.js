@@ -6,15 +6,14 @@ export default async function handler(req, res) {
 
   const noteKey = `note_${userid}`;
 
-  // POST: Lưu note
   if (req.method === 'POST') {
-    const { note } = req.body || {};
-    const safeNote = String(note || '').slice(0, 100);
+    let body = req.body;
+    if (typeof body === 'string') body = JSON.parse(body);
+    const safeNote = String(body?.note || '').slice(0, 100);
     await kv.set(noteKey, safeNote);
     return res.status(200).json({ message: 'Đã lưu ghi chú!' });
   }
 
-  // GET: Đọc note
   if (req.method === 'GET') {
     const note = await kv.get(noteKey);
     return res.status(200).json({ note: note || '' });
