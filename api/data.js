@@ -2,55 +2,57 @@ import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
   try {
-    // 1. Đọc Set index
     let ids = await kv.smembers('account_ids');
 
-    // 2. FALLBACK: Nếu Set rỗng → scan kv.keys()
+    // Fallback
     if (!ids || ids.length === 0) {
       const keys = await kv.keys('account_*');
       if (keys && keys.length > 0) {
         ids = keys.map(k => k.replace('account_', ''));
-        
-        // Rebuild Set TUẦN TỰ (tránh lỗi spread quá nhiều args)
-        for (const id of ids) {
-          await kv.sadd('account_ids', id);
-        }
-        console.log(`[DATA] Rebuilt index for ${ids.length} accounts`);
+        for (const id of ids) await kv.sadd('account_ids', id);
       }
     }
 
     if (!ids || ids.length === 0) {
-      return res.status(200).json({});
+      return res.status(200).json({ accounts: {}, notes: {} });
     }
 
-    // 3. Lấy data song song
-    const dataKeys = ids.map(id => `account_${id}`);
-    const values = await Promise.all(dataKeys.map(k => kv.get(k)));
+    // Lấy CẢ data + note + scroll trong 1 lần (song song)
+    const dataKeys   = ids.map(id => `account_${id}`);
+    const noteKeys   = ids.map(id => `note_${id}`);
+    const scrollKeys = ids.map(id => `scroll_${id}`);
 
-    // 4. Build response + log để debug
+    const [dataValues, noteValues, scrollValues] = await Promise.all([
+      Promise.all(dataKeys.map(k => kv.get(k))),
+      Promise.all(noteKeys.map(k => kv.get(k))),
+      Promise.all(scrollKeys.map(k => kv.get(k))),
+    ]);
+
     const accounts = {};
-    const deadIds = [];
+    const notes    = {};
+    const scrolls  = {};
+    const deadIds  = [];
 
-    values.forEach((data, i) => {
-      if (data) {
-        accounts[ids[i]] = data;
+    ids.forEach((id, i) => {
+      if (dataValues[i]) {
+        accounts[id] = dataValues[i];
+        notes[id]    = noteValues[i] || '';
+        scrolls[id]  = scrollValues[i] || null;
       } else {
-        deadIds.push(ids[i]);
+        deadIds.push(id);
       }
     });
 
-    console.log(`[DATA] Returned ${Object.keys(accounts).length} accounts, ${deadIds.length} dead`);
-
-    // 5. Cleanup ID chết (chạy tuần tự)
+    // Cleanup
     if (deadIds.length > 0) {
       for (const id of deadIds) {
         kv.srem('account_ids', id).catch(() => {});
       }
     }
 
-    return res.status(200).json(accounts);
+    return res.status(200).json({ accounts, notes, scrolls });
   } catch (err) {
-    console.error('[DATA ERROR]', err.message, err.stack);
-    return res.status(500).json({ error: err.message });
+    console.error('[DATA ERROR]', err.message);
+    return res.status(500).json({ accounts: {}, notes: {}, scrolls: {} });
   }
 }
