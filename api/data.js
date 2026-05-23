@@ -2,25 +2,27 @@ import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
   try {
-    // Dùng Set index thay vì kv.keys() - nhanh hơn nhiều
-    const ids = await kv.smembers('account_ids');
+    let ids = await kv.smembers('account_ids');
     
+    // Fallback: nếu Set rỗng → quét keys() và auto-build Set
     if (!ids || ids.length === 0) {
-      return res.status(200).json({});
+      const keys = await kv.keys('account_*');
+      ids = keys.map(k => k.replace('account_', ''));
+      
+      // Auto rebuild Set
+      if (ids.length > 0) {
+        await kv.sadd('account_ids', ...ids);
+      }
     }
+    
+    if (!ids || ids.length === 0) return res.status(200).json({});
 
-    // Lấy tất cả account song song
     const keys = ids.map(id => `account_${id}`);
     const values = await Promise.all(keys.map(k => kv.get(k)));
 
     const accounts = {};
     values.forEach((data, i) => {
-      if (data) {
-        accounts[ids[i]] = data;
-      } else {
-        // Cleanup: xóa ID không còn data
-        kv.srem('account_ids', ids[i]);
-      }
+      if (data) accounts[ids[i]] = data;
     });
 
     res.status(200).json(accounts);
