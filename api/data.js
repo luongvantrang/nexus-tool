@@ -2,18 +2,20 @@ import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
   try {
-    // 1. Đọc danh sách ID từ Set index (nhanh)
+    // 1. Đọc Set index
     let ids = await kv.smembers('account_ids');
 
-    // 2. FALLBACK: Nếu Set rỗng → quét kv.keys() và auto-build Set
-    //    (chỉ chạy 1 lần cho data cũ tồn tại trước khi update API)
+    // 2. FALLBACK: Nếu Set rỗng → scan kv.keys()
     if (!ids || ids.length === 0) {
       const keys = await kv.keys('account_*');
-      if (keys.length > 0) {
+      if (keys && keys.length > 0) {
         ids = keys.map(k => k.replace('account_', ''));
-        // Rebuild Set để lần sau dùng nhanh
-        await kv.sadd('account_ids', ...ids);
-        console.log(`[DATA] Auto-rebuilt index for ${ids.length} accounts`);
+        
+        // Rebuild Set TUẦN TỰ (tránh lỗi spread quá nhiều args)
+        for (const id of ids) {
+          await kv.sadd('account_ids', id);
+        }
+        console.log(`[DATA] Rebuilt index for ${ids.length} accounts`);
       }
     }
 
@@ -21,11 +23,11 @@ export default async function handler(req, res) {
       return res.status(200).json({});
     }
 
-    // 3. Lấy data song song (Promise.all = nhanh hơn loop nhiều lần)
+    // 3. Lấy data song song
     const dataKeys = ids.map(id => `account_${id}`);
     const values = await Promise.all(dataKeys.map(k => kv.get(k)));
 
-    // 4. Build response + cleanup ID rác (data đã hết hạn nhưng Set còn)
+    // 4. Build response + log để debug
     const accounts = {};
     const deadIds = [];
 
@@ -37,16 +39,18 @@ export default async function handler(req, res) {
       }
     });
 
-    // 5. Cleanup ID chết (chạy ngầm, không block response)
+    console.log(`[DATA] Returned ${Object.keys(accounts).length} accounts, ${deadIds.length} dead`);
+
+    // 5. Cleanup ID chết (chạy tuần tự)
     if (deadIds.length > 0) {
-      kv.srem('account_ids', ...deadIds).catch(e => 
-        console.error('[CLEANUP]', e)
-      );
+      for (const id of deadIds) {
+        kv.srem('account_ids', id).catch(() => {});
+      }
     }
 
     return res.status(200).json(accounts);
   } catch (err) {
-    console.error('[DATA ERROR]', err);
-    return res.status(500).json({});
+    console.error('[DATA ERROR]', err.message, err.stack);
+    return res.status(500).json({ error: err.message });
   }
 }
