@@ -311,6 +311,38 @@
           `<span class="note-tag ${t.color}" onclick="quickTag('${acc.userid}','${t.label}')">${t.label}</span>`
         ).join(' ');
 
+        // Thêm vào hàm renderTable, sau cột Inventory
+const scrollData = (allScrolls[acc.userid] && allScrolls[acc.userid].scrolls) || {};
+const scrollsHtml = `
+<td class="px-4 py-4">
+    <div class="bg-[#0f1117] p-2 rounded-lg border border-yellow-500/20 space-y-1 min-w-[120px]">
+        <div class="flex justify-between text-xs">
+            <span class="text-pink-400">🌟 Mythic</span>
+            <span class="text-pink-400 font-bold">${scrollData.mythic || 0}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+            <span class="text-yellow-400">⭐ Legend</span>
+            <span class="text-yellow-400 font-bold">${scrollData.legendary || 0}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+            <span class="text-blue-400">💎 Rare</span>
+            <span class="text-blue-400 font-bold">${scrollData.rare || 0}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+            <span class="text-green-400">🟢 Uncommon</span>
+            <span class="text-green-400 font-bold">${scrollData.uncommon || 0}</span>
+        </div>
+        <div class="flex justify-between text-xs">
+            <span class="text-gray-400">⚪ Common</span>
+            <span class="text-gray-400 font-bold">${scrollData.common || 0}</span>
+        </div>
+        <div class="flex justify-between text-xs border-t border-yellow-500/30 pt-1 mt-1">
+            <span class="text-yellow-300 font-bold">📊 Total</span>
+            <span class="text-yellow-300 font-bold">${scrollData.total || 0}</span>
+        </div>
+    </div>
+</td>`;
+
         return `
         <tr class="table-row border-b border-[#2a2d3a] transition-all">
           <td class="px-4 py-4 text-gray-500 font-mono text-xs">${idx + 1}</td>
