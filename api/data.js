@@ -1,10 +1,13 @@
 import { kv } from '@vercel/kv';
 
 export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
   try {
     let ids = await kv.smembers('account_ids');
 
-    // Fallback: rebuild Set nếu rỗng
     if (!ids || ids.length === 0) {
       const keys = await kv.keys('account_*');
       if (keys && keys.length > 0) {
@@ -17,10 +20,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ accounts: {}, notes: {}, scrolls: {} });
     }
 
-    // Lấy data + note + scroll song song
-    const dataKeys   = ids.map(id => `account_${id}`);
-    const noteKeys   = ids.map(id => `note_${id}`);
-    const scrollKeys = ids.map(id => `scroll_${id}`);
+    const dataKeys    = ids.map(id => `account_${id}`);
+    const noteKeys    = ids.map(id => `note_${id}`);
+    const scrollKeys  = ids.map(id => `scrolls_${id}`);
 
     const [dataValues, noteValues, scrollValues] = await Promise.all([
       Promise.all(dataKeys.map(k => kv.get(k))),
@@ -37,13 +39,12 @@ export default async function handler(req, res) {
       if (dataValues[i]) {
         accounts[id] = dataValues[i];
         notes[id]    = noteValues[i] || '';
-        scrolls[id]  = scrollValues[i] || null;
+        scrolls[id]  = scrollValues[i] || { scrolls: {} };
       } else {
         deadIds.push(id);
       }
     });
 
-    // Cleanup ID hết hạn
     if (deadIds.length > 0) {
       for (const id of deadIds) {
         kv.srem('account_ids', id).catch(() => {});
@@ -52,7 +53,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ accounts, notes, scrolls });
   } catch (err) {
-    console.error('[DATA ERROR]', err.message);
     return res.status(500).json({ accounts: {}, notes: {}, scrolls: {} });
   }
 }
