@@ -9,112 +9,157 @@
   <style>
     body { background: #0f1117; font-family: 'Segoe UI', sans-serif; }
     .sidebar { width: 220px; min-height: 100vh; background: #16181f; border-right: 1px solid #2a2d3a; }
-    .main { flex: 1; overflow-x: auto; }
     .stat-card { background: #1e2130; border: 1px solid #2a2d3a; border-radius: 12px; transition: transform 0.2s; }
     .stat-card:hover { transform: translateY(-2px); border-color: #06b6d4; }
     .table-row:hover { background: #1e2130; }
     .badge { border-radius: 6px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
-    .online-dot { width: 10px; height: 10px; border-radius: 50%; background: #22c55e; display: inline-block; box-shadow: 0 0 8px #22c55e; }
-    .offline-dot { width: 10px; height: 10px; border-radius: 50%; background: #6b7280; display: inline-block; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0f1117; }
-    ::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
-    select option { background: #16181f; color: #e5e7eb; }
+    .online-dot { width:10px; height:10px; border-radius:50%; background:#22c55e;
+                  display:inline-block; box-shadow:0 0 8px #22c55e; animation: pulse 2s infinite; }
+    .offline-dot { width:10px; height:10px; border-radius:50%; background:#6b7280; display:inline-block; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:#0f1117; }
+    ::-webkit-scrollbar-thumb { background:#2a2d3a; border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:#06b6d4; }
+    select option { background:#16181f; color:#e5e7eb; }
+    .btn-loading { opacity:0.6; pointer-events:none; cursor:not-allowed; }
+    .sea-badge-1 { background:#1e3a5f; color:#60a5fa; border:1px solid #2563eb40; }
+    .sea-badge-2 { background:#1a3a2a; color:#4ade80; border:1px solid #16a34a40; }
+    .sea-badge-3 { background:#3b1f2b; color:#f472b6; border:1px solid #db277440; }
+    .toast { position:fixed; bottom:24px; right:24px; z-index:9999;
+             background:#1e2130; border:1px solid #2a2d3a; border-radius:12px;
+             padding:14px 20px; min-width:280px; box-shadow:0 8px 32px rgba(0,0,0,.5);
+             transform:translateY(100px); opacity:0; transition:all .3s ease; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.success { border-color:#22c55e40; }
+    .toast.error   { border-color:#ef444440; }
   </style>
 </head>
 <body class="text-gray-200 flex">
 
+  <!-- SIDEBAR -->
   <div class="sidebar flex flex-col p-4 gap-2 fixed top-0 left-0 h-full z-10">
     <div class="flex items-center gap-2 mb-6 mt-2">
       <i class="fa-solid fa-dragon text-cyan-400 text-xl"></i>
       <span class="font-bold text-white text-lg">Atlantis Stat</span>
     </div>
-
     <div class="text-xs text-gray-500 uppercase mb-2">Games</div>
-    <div class="flex items-center gap-3 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg px-3 py-2 cursor-pointer">
-      <img src="https://i.imgur.com/8Q7X2X5.png" class="w-6 h-6 rounded">
+    <div class="flex items-center gap-3 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-lg px-3 py-2">
+      <i class="fa-solid fa-apple-whole text-lg"></i>
       <span class="font-semibold">Blox Fruits</span>
     </div>
-
-    <div class="mt-auto">
-      <div class="text-xs text-gray-500 uppercase mb-2">Menu</div>
-      <div class="flex items-center gap-3 text-gray-400 hover:text-white rounded-lg px-3 py-2 cursor-pointer transition-colors">
-        <i class="fa-solid fa-chart-line w-4 text-center"></i>
-        <span>Chart</span>
+    <div class="mt-auto space-y-1">
+      <div class="text-xs text-gray-500 uppercase mb-2">Info</div>
+      <div class="flex items-center gap-3 text-gray-400 rounded-lg px-3 py-2">
+        <i class="fa-solid fa-clock w-4 text-center text-cyan-400"></i>
+        <span class="text-xs" id="sidebar-time">--:--:--</span>
       </div>
-      <div class="flex items-center gap-3 text-gray-400 hover:text-white rounded-lg px-3 py-2 cursor-pointer transition-colors">
-        <i class="fa-solid fa-share-nodes w-4 text-center"></i>
-        <span>Share</span>
+      <div class="flex items-center gap-3 text-gray-400 rounded-lg px-3 py-2">
+        <i class="fa-solid fa-circle w-4 text-center text-green-400"></i>
+        <span class="text-xs" id="sidebar-online">0 Online</span>
       </div>
     </div>
   </div>
 
-  <div class="main ml-[220px] p-6">
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="toast">
+    <div class="flex items-center gap-3">
+      <i id="toast-icon" class="text-lg"></i>
+      <div>
+        <div id="toast-title" class="font-bold text-sm"></div>
+        <div id="toast-msg" class="text-xs text-gray-400 mt-0.5"></div>
+      </div>
+    </div>
+  </div>
 
+  <!-- MAIN CONTENT -->
+  <div class="main ml-[220px] p-6" style="flex:1; overflow-x:auto;">
+
+    <!-- HEADER -->
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-white flex items-center gap-3">
         <i class="fa-solid fa-gamepad text-cyan-400"></i> Command Center
       </h1>
       <div class="flex items-center gap-3">
         <div class="relative">
-          <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-          <input id="searchInput" type="text"
-                 placeholder="Tìm kiếm account..."
+          <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+          <input id="searchInput" type="text" placeholder="Tìm kiếm account..."
                  class="bg-[#1e2130] border border-[#2a2d3a] rounded-lg pl-9 pr-4 py-2 text-sm outline-none focus:border-cyan-500 w-64 transition-colors">
         </div>
-        <button onclick="loadData()" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold px-4 py-2 rounded-lg text-sm shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2">
+        <button onclick="loadData()" 
+                class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold px-4 py-2 rounded-lg text-sm shadow-lg shadow-cyan-500/20 transition-all flex items-center gap-2">
           <i class="fa-solid fa-rotate-right"></i> Refresh
         </button>
       </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="overview">
+    <!-- OVERVIEW CARDS -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
       <div class="stat-card p-4">
-        <div class="flex items-center gap-2 text-xs text-gray-400 mb-2 font-bold uppercase"><i class="fa-solid fa-users"></i> Online / Total</div>
+        <div class="text-xs text-gray-400 mb-2 font-bold uppercase flex items-center gap-2">
+          <i class="fa-solid fa-users text-cyan-400"></i> Online / Total
+        </div>
         <div class="text-2xl font-bold text-white" id="ov-online">0 / 0</div>
       </div>
       <div class="stat-card p-4">
-        <div class="flex items-center gap-2 text-xs text-gray-400 mb-2 font-bold uppercase"><i class="fa-solid fa-money-bill-wave text-green-400"></i> Tổng Beli</div>
+        <div class="text-xs text-gray-400 mb-2 font-bold uppercase flex items-center gap-2">
+          <i class="fa-solid fa-money-bill-wave text-green-400"></i> Tổng Beli
+        </div>
         <div class="text-2xl font-bold text-green-400" id="ov-beli">0</div>
       </div>
       <div class="stat-card p-4">
-        <div class="flex items-center gap-2 text-xs text-gray-400 mb-2 font-bold uppercase"><i class="fa-solid fa-gem text-purple-400"></i> Tổng Fragment</div>
+        <div class="text-xs text-gray-400 mb-2 font-bold uppercase flex items-center gap-2">
+          <i class="fa-solid fa-gem text-purple-400"></i> Tổng Fragment
+        </div>
         <div class="text-2xl font-bold text-purple-400" id="ov-frag">0</div>
       </div>
       <div class="stat-card p-4">
-        <div class="flex items-center gap-2 text-xs text-gray-400 mb-2 font-bold uppercase"><i class="fa-solid fa-heart text-red-400"></i> Tổng Heart</div>
+        <div class="text-xs text-gray-400 mb-2 font-bold uppercase flex items-center gap-2">
+          <i class="fa-solid fa-heart text-red-400"></i> Tổng Heart
+        </div>
         <div class="text-2xl font-bold text-red-400" id="ov-heart">0</div>
+      </div>
+      <div class="stat-card p-4">
+        <div class="text-xs text-gray-400 mb-2 font-bold uppercase flex items-center gap-2">
+          <i class="fa-solid fa-scroll text-yellow-400"></i> Mythic + Leg
+        </div>
+        <div class="text-2xl font-bold text-yellow-400" id="ov-scroll">0</div>
       </div>
     </div>
 
+    <!-- TABLE -->
     <div class="bg-[#16181f] rounded-xl border border-[#2a2d3a] overflow-hidden shadow-xl">
       <div class="flex items-center justify-between px-6 py-4 border-b border-[#2a2d3a] bg-[#1a1d27]">
         <div class="text-sm font-semibold text-gray-300 flex items-center gap-2">
-          <i class="fa-solid fa-list-ul"></i> Danh sách Tài khoản (<span id="total-count" class="text-cyan-400">0</span>)
+          <i class="fa-solid fa-list-ul"></i> 
+          Danh sách Tài khoản 
+          (<span id="total-count" class="text-cyan-400">0</span>)
         </div>
-        <div class="text-xs text-gray-500 flex items-center gap-1"><i class="fa-solid fa-circle-notch animate-spin"></i> Auto-sync: 5s</div>
+        <div class="flex items-center gap-3">
+          <div class="text-xs text-gray-500 flex items-center gap-1">
+            <i class="fa-solid fa-circle-notch animate-spin text-cyan-500"></i> 
+            Auto-sync: 5s
+          </div>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
             <tr class="text-[11px] text-gray-400 uppercase tracking-wider border-b border-[#2a2d3a] bg-[#16181f]">
-              <th class="px-6 py-3 text-left font-semibold">Account</th>
-              <th class="px-4 py-3 text-left font-semibold">Details</th>
-              <th class="px-4 py-3 text-left font-semibold">Equipped</th>
-              <th class="px-4 py-3 text-center font-semibold">Inventory</th>
-              <th class="px-4 py-3 text-left font-semibold">System</th>
-              <th class="px-4 py-3 text-center font-semibold text-cyan-400">⚡ Control</th>
+              <th class="px-6 py-3 text-left">#</th>
+              <th class="px-4 py-3 text-left">Account</th>
+              <th class="px-4 py-3 text-left">Details</th>
+              <th class="px-4 py-3 text-left">Equipped</th>
+              <th class="px-4 py-3 text-center">Inventory</th>
+              <th class="px-4 py-3 text-left">System</th>
+              <th class="px-4 py-3 text-center text-cyan-400">⚡ Control</th>
             </tr>
           </thead>
-          <tfoot id="tableFoot" class="hidden">
-            <tr><td colspan="6" class="text-center py-10 text-gray-500">Đang lọc dữ liệu...</td></tr>
-          </tfoot>
           <tbody id="tableBody">
             <tr>
-              <td colspan="6" class="text-center py-20 text-gray-500 flex flex-col items-center justify-center">
-                <i class="fa-solid fa-spinner animate-spin text-3xl mb-3 text-cyan-500/50"></i>
+              <td colspan="7" class="text-center py-20 text-gray-500">
+                <i class="fa-solid fa-spinner animate-spin text-3xl mb-3 text-cyan-500/50 block mb-3"></i>
                 Đang tải dữ liệu từ Vercel...
               </td>
             </tr>
@@ -122,19 +167,19 @@
         </table>
       </div>
     </div>
+
   </div>
 
   <script>
-    // --- CẤU HÌNH API ---
-    const API_DATA = '/api/data';
+    const API_DATA    = '/api/data';
     const API_COMMAND = '/api/command';
-    const API_AVATAR = '/api/avatar?userid=';
+    const API_AVATAR  = '/api/avatar?userid=';
 
     let allAccounts = {};
 
+    // ── UTILS ──────────────────────────────────────────────
     function isOnline(acc) {
-      const last = new Date(acc.lastRaw || 0);
-      return (Date.now() - last.getTime()) < 60000;
+      return (Date.now() - new Date(acc.lastRaw || 0).getTime()) < 65000;
     }
 
     function fmtNum(n) {
@@ -143,198 +188,298 @@
       if (num >= 1e9) return (num/1e9).toFixed(2) + 'B';
       if (num >= 1e6) return (num/1e6).toFixed(2) + 'M';
       if (num >= 1e3) return (num/1e3).toFixed(1) + 'K';
-      return String(n);
+      return String(Math.floor(num));
     }
 
+    function showToast(type, title, msg) {
+      const t = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      t.className = `toast ${type}`;
+      icon.className = type === 'success'
+        ? 'fa-solid fa-circle-check text-lg text-green-400'
+        : 'fa-solid fa-circle-xmark text-lg text-red-400';
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-msg').textContent   = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // ── SIDEBAR CLOCK ─────────────────────────────────────
+    setInterval(() => {
+      document.getElementById('sidebar-time').textContent =
+        new Date().toLocaleTimeString('vi-VN');
+    }, 1000);
+
+    // ── OVERVIEW ──────────────────────────────────────────
     function updateOverview(accounts) {
       const list = Object.values(accounts);
-      const online = list.filter(a => isOnline(a)).length;
-      const total = list.length;
-      let beli = 0, frag = 0, heart = 0;
-
+      const online = list.filter(isOnline).length;
+      let beli = 0, frag = 0, heart = 0, scroll = 0;
       list.forEach(a => {
-        beli  += parseFloat(String(a.beli  || '0').replace(/,/g,'')) || 0;
-        frag  += parseFloat(String(a.frag  || '0').replace(/,/g,'')) || 0;
-        heart += parseInt(a.heart || 0);
+        beli   += parseFloat(String(a.beli  || '0').replace(/,/g,'')) || 0;
+        frag   += parseFloat(String(a.frag  || '0').replace(/,/g,'')) || 0;
+        heart  += parseInt(a.heart  || 0);
+        scroll += parseInt(a.mythic || 0) + parseInt(a.legend || 0);
       });
-
-      document.getElementById('ov-online').textContent = `${online} / ${total}`;
-      document.getElementById('ov-beli').textContent   = fmtNum(beli);
-      document.getElementById('ov-frag').textContent   = fmtNum(frag);
-      document.getElementById('ov-heart').textContent  = heart;
-      document.getElementById('total-count').textContent = total;
+      document.getElementById('ov-online').textContent  = `${online} / ${list.length}`;
+      document.getElementById('ov-beli').textContent    = fmtNum(beli);
+      document.getElementById('ov-frag').textContent    = fmtNum(frag);
+      document.getElementById('ov-heart').textContent   = heart;
+      document.getElementById('ov-scroll').textContent  = scroll;
+      document.getElementById('total-count').textContent = list.length;
+      document.getElementById('sidebar-online').textContent = `${online} Online`;
     }
 
+    // ── RENDER TABLE ──────────────────────────────────────
     function renderTable(accounts) {
       const tbody = document.getElementById('tableBody');
-      const list = Object.values(accounts);
+      const list  = Object.values(accounts);
 
       if (list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-20 text-gray-500">Không tìm thấy tài khoản nào...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-20 text-gray-500">
+          Không tìm thấy tài khoản nào...</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = list.map(acc => {
-        const online = isOnline(acc);
-        const dot = online 
-          ? `<span class="online-dot mr-2" title="Online"></span>` 
-          : `<span class="offline-dot mr-2" title="Offline"></span>`;
+      // Sort: online lên trên, rồi theo level giảm dần
+      list.sort((a, b) => {
+        const oa = isOnline(a), ob = isOnline(b);
+        if (oa !== ob) return ob - oa;
+        return (b.level || 0) - (a.level || 0);
+      });
 
-        // TẠO DROPDOWN VŨ KHÍ TỰ ĐỘNG
-        let weaponOptions = '<option value="">-- Chọn VK / Hệ --</option>';
+      tbody.innerHTML = list.map((acc, idx) => {
+        const online = isOnline(acc);
+        const dot = online
+          ? `<span class="online-dot mr-2"></span>`
+          : `<span class="offline-dot mr-2"></span>`;
+
+        // Sea badge
+        const sea = acc.sea || 1;
+        const seaClass = `sea-badge-${sea}`;
+        const seaLabel = `Sea ${sea}`;
+
+        // Weapon dropdown
+        let weaponOptions = '<option value="">-- Chọn vũ khí --</option>';
         if (acc.weapon_list && acc.weapon_list.length > 0) {
-            let sortedList = [...acc.weapon_list].sort((a,b) => b.mastery - a.mastery);
-            sortedList.forEach(w => {
-                let icon = w.type === 'Sword' ? '⚔️' : (w.type === 'Blox Fruit' ? '🍎' : '🔫');
-                let stat = w.type === 'Blox Fruit' ? 'Demon Fruit' : w.type;
-                weaponOptions += `<option value="${w.name}|${stat}">${icon} ${w.name} (Mas: ${w.mastery})</option>`;
-            });
+          const sorted = [...acc.weapon_list].sort((a,b) => b.mastery - a.mastery);
+          sorted.forEach(w => {
+            const icon = w.type === 'Sword' ? '⚔️' : w.type === 'Blox Fruit' ? '🍎' : '🔫';
+            const stat = w.type === 'Blox Fruit' ? 'Demon Fruit' : w.type;
+            weaponOptions += `<option value="${w.name}|${stat}">
+              ${icon} ${w.name} (${w.mastery})
+            </option>`;
+          });
         } else {
-            weaponOptions = '<option value="">(Không có dữ liệu VK)</option>';
+          weaponOptions = '<option value="">(Chưa có dữ liệu)</option>';
         }
 
+        // Ping color
+        const ping = acc.ping || 0;
+        const pingColor = ping < 100 ? 'text-green-400' : ping < 200 ? 'text-yellow-400' : 'text-red-400';
+
         return `
-          <tr class="table-row border-b border-[#2a2d3a] transition-all">
-            
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <img src="${API_AVATAR}${acc.userid}" 
-                     class="w-11 h-11 rounded-lg border border-cyan-500/20 bg-[#0f1117]" 
-                     onerror="this.src='https://i.imgur.com/8Q7X2X5.png'">
-                <div>
-                  <div class="flex items-center font-bold text-white text-[15px]">
-                    ${dot}${acc.player}
-                  </div>
-                  <div class="text-[11px] text-gray-500 font-mono mt-0.5">ID: ${acc.userid}</div>
+        <tr class="table-row border-b border-[#2a2d3a] transition-all">
+
+          <td class="px-6 py-4 text-gray-500 font-mono text-xs">${idx + 1}</td>
+
+          <td class="px-4 py-4">
+            <div class="flex items-center gap-3">
+              <div class="relative">
+                <img src="${API_AVATAR}${acc.userid}"
+                     class="w-11 h-11 rounded-lg border border-cyan-500/20 bg-[#0f1117]"
+                     onerror="this.src='https://placehold.co/44x44/1e2130/cyan?text=?'">
+                <span class="absolute -bottom-1 -right-1 text-[10px] px-1 rounded font-bold ${seaClass}">${seaLabel}</span>
+              </div>
+              <div>
+                <div class="flex items-center font-bold text-white text-[15px]">
+                  ${dot}${acc.player || 'Unknown'}
                 </div>
+                <div class="text-[10px] text-gray-500 font-mono mt-0.5">ID: ${acc.userid}</div>
+                <div class="text-[10px] text-gray-600 mt-0.5">${acc.executor || ''}</div>
               </div>
-            </td>
+            </div>
+          </td>
 
-            <td class="px-4 py-4">
-              <div class="space-y-1">
-                <div class="flex items-center gap-2">
-                  <span class="text-[11px] text-gray-500 w-8 font-bold uppercase">Lv</span>
-                  <span class="text-sm font-bold text-white">${acc.level || 0}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="text-[11px] text-gray-500 w-8 font-bold uppercase">$</span>
-                  <span class="text-xs font-semibold text-green-400">${fmtNum(acc.beli)}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="text-[11px] text-gray-500 w-8 font-bold uppercase">F</span>
-                  <span class="text-xs font-semibold text-purple-400">${fmtNum(acc.frag)}</span>
-                </div>
+          <td class="px-4 py-4">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-gray-500 w-7 font-bold">LV</span>
+                <span class="text-sm font-bold text-white">${acc.level || 0}</span>
               </div>
-            </td>
-
-            <td class="px-4 py-4">
-              <div class="space-y-1.5 flex flex-col items-start">
-                <span class="badge bg-red-500/10 border border-red-500/20 text-red-400">🍎 ${acc.fruit || 'Không'}</span>
-                <span class="badge bg-blue-500/10 border border-blue-500/20 text-blue-400">⚔️ ${acc.sword || 'Không'}</span>
-                <span class="badge bg-orange-500/10 border border-orange-500/20 text-orange-400">🥊 ${acc.fighting || 'Không'}</span>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-gray-500 w-7 font-bold">$</span>
+                <span class="text-xs font-semibold text-green-400">${fmtNum(acc.beli)}</span>
               </div>
-            </td>
-
-            <td class="px-4 py-4">
-              <div class="grid grid-cols-2 gap-2 text-xs bg-[#0f1117] p-2 rounded-lg border border-[#2a2d3a]">
-                <div class="flex justify-between items-center"><span class="text-gray-500">❤️ Tim</span> <span class="text-red-400 font-bold">${acc.heart || 0}</span></div>
-                <div class="flex justify-between items-center"><span class="text-gray-500">🛡️ Vảy</span> <span class="text-cyan-400 font-bold">${acc.scale || 0}</span></div>
-                <div class="flex justify-between items-center"><span class="text-gray-500">🌟 Myt</span> <span class="text-purple-400 font-bold">${acc.mythic || 0}</span></div>
-                <div class="flex justify-between items-center"><span class="text-gray-500">⭐ Leg</span> <span class="text-yellow-400 font-bold">${acc.legend || 0}</span></div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] text-gray-500 w-7 font-bold">F</span>
+                <span class="text-xs font-semibold text-purple-400">${fmtNum(acc.frag)}</span>
               </div>
-            </td>
+            </div>
+          </td>
 
-            <td class="px-4 py-4">
-              <div class="space-y-1 text-xs">
-                <div class="flex justify-between w-24"><span class="text-gray-500">FPS:</span> <span class="text-emerald-400 font-bold">${acc.fps || 0}</span></div>
-                <div class="flex justify-between w-24"><span class="text-gray-500">Ping:</span> <span class="text-orange-400">${acc.ping || 0}ms</span></div>
-                <div class="flex justify-between w-24"><span class="text-gray-500">Treo:</span> <span class="text-cyan-400">${acc.treo || '00:00'}</span></div>
+          <td class="px-4 py-4">
+            <div class="space-y-1.5 flex flex-col">
+              <span class="badge bg-red-500/10 border border-red-500/20 text-red-400">
+                🍎 ${acc.fruit || 'Không'}
+              </span>
+              <span class="badge bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                ⚔️ ${acc.sword || 'Không'}
+              </span>
+              <span class="badge bg-orange-500/10 border border-orange-500/20 text-orange-400">
+                🥊 ${acc.fighting || 'Không'}
+              </span>
+            </div>
+          </td>
+
+          <td class="px-4 py-4">
+            <div class="grid grid-cols-2 gap-1.5 text-xs bg-[#0f1117] p-2 rounded-lg border border-[#2a2d3a]">
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-gray-500">❤️</span>
+                <span class="text-red-400 font-bold">${acc.heart || 0}</span>
               </div>
-            </td>
-
-            <td class="px-4 py-4 text-center">
-              <div class="flex flex-col gap-1 items-center">
-                <select id="cmd-${acc.userid}" class="bg-[#0f1117] border border-[#2a2d3a] text-gray-300 text-[11px] rounded p-1 outline-none w-36 focus:border-cyan-500 transition-colors mb-1">
-                  ${weaponOptions}
-                </select>
-                <button onclick="sendCommand('${acc.userid}', 'equip_weapon')" class="w-36 bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/50 text-emerald-400 hover:text-white text-[10px] font-bold py-1 px-2 rounded transition-all flex items-center justify-center gap-1">
-                  <i class="fa-solid fa-hand-fist"></i> TRANG BỊ NHANH
-                </button>
-                <button onclick="sendCommand('${acc.userid}', 'swap_build')" class="w-36 bg-cyan-600/20 hover:bg-cyan-600 border border-cyan-500/50 text-cyan-400 hover:text-white text-[10px] font-bold py-1 px-2 rounded transition-all flex items-center justify-center gap-1">
-                  <i class="fa-solid fa-bolt"></i> TẨY ĐIỂM & ĐỔI HỆ
-                </button>
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-gray-500">🛡️</span>
+                <span class="text-cyan-400 font-bold">${acc.scale || 0}</span>
               </div>
-            </td>
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-gray-500">🌟</span>
+                <span class="text-purple-400 font-bold">${acc.mythic || 0}</span>
+              </div>
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-gray-500">⭐</span>
+                <span class="text-yellow-400 font-bold">${acc.legend || 0}</span>
+              </div>
+            </div>
+          </td>
 
-          </tr>
-        `;
+          <td class="px-4 py-4">
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between w-24">
+                <span class="text-gray-500">FPS</span>
+                <span class="text-emerald-400 font-bold">${acc.fps || 0}</span>
+              </div>
+              <div class="flex justify-between w-24">
+                <span class="text-gray-500">Ping</span>
+                <span class="${pingColor} font-bold">${ping}ms</span>
+              </div>
+              <div class="flex justify-between w-24">
+                <span class="text-gray-500">Treo</span>
+                <span class="text-cyan-400">${acc.treo || '00:00'}</span>
+              </div>
+              <div class="flex justify-between w-24">
+                <span class="text-gray-500">Sync</span>
+                <span class="text-gray-500 text-[10px]">${acc.lastUpdate || '-'}</span>
+              </div>
+            </div>
+          </td>
+
+          <td class="px-4 py-4 text-center">
+            <div class="flex flex-col gap-1.5 items-center">
+              <select id="cmd-${acc.userid}"
+                      class="bg-[#0f1117] border border-[#2a2d3a] text-gray-300 text-[11px] rounded p-1.5 outline-none w-40 focus:border-cyan-500 transition-colors">
+                ${weaponOptions}
+              </select>
+              <button id="btn-equip-${acc.userid}"
+                      onclick="sendCommand('${acc.userid}', 'equip_weapon')"
+                      class="w-40 bg-emerald-600/20 hover:bg-emerald-600 border border-emerald-500/50 text-emerald-400 hover:text-white text-[10px] font-bold py-1.5 px-2 rounded transition-all flex items-center justify-center gap-1">
+                <i class="fa-solid fa-hand-fist"></i> TRANG BỊ NHANH
+              </button>
+              <button id="btn-swap-${acc.userid}"
+                      onclick="sendCommand('${acc.userid}', 'swap_build')"
+                      class="w-40 bg-cyan-600/20 hover:bg-cyan-600 border border-cyan-500/50 text-cyan-400 hover:text-white text-[10px] font-bold py-1.5 px-2 rounded transition-all flex items-center justify-center gap-1">
+                <i class="fa-solid fa-bolt"></i> TẨY ĐIỂM & ĐỔI HỆ
+              </button>
+            </div>
+          </td>
+
+        </tr>`;
       }).join('');
     }
 
-    // --- HÀM THỰC THI LỆNH GỬI LÊN VERCEL KV ---
+    // ── SEND COMMAND ──────────────────────────────────────
     async function sendCommand(userid, action) {
-      const selectEl = document.getElementById(`cmd-${userid}`);
-      const selectedVal = selectEl.value;
-      
-      if (!selectedVal) {
-        alert('⚠️ Vui lòng chọn vũ khí trước!');
+      const sel = document.getElementById(`cmd-${userid}`);
+      if (!sel || !sel.value) {
+        showToast('error', 'Thiếu lựa chọn', 'Vui lòng chọn vũ khí trước!');
         return;
       }
-      
-      const [weapon, stat] = selectedVal.split('|');
-      
-      // Hiển thị cảnh báo xác nhận dựa theo loại lệnh
-      if (action === 'swap_build') {
-        if (!confirm(`Xác nhận TẨY ĐIỂM (tốn 2500 Frag), max điểm vào [${stat}] và trang bị [${weapon}]?`)) return;
-      } else {
-        if (!confirm(`Xác nhận TRANG BỊ NHANH vũ khí [${weapon}]? (Không tẩy điểm)`)) return;
-      }
+
+      const [weapon, stat] = sel.value.split('|');
+      const confirmMsg = action === 'swap_build'
+        ? `Xác nhận TẨY ĐIỂM + đổi hệ [${stat}] + trang bị [${weapon}]?\n(Tốn ~2500 Fragment)`
+        : `Xác nhận trang bị nhanh [${weapon}]? (Không tẩy điểm)`;
+
+      if (!confirm(confirmMsg)) return;
+
+      // Loading state
+      const btn = document.getElementById(`btn-${action === 'swap_build' ? 'swap' : 'equip'}-${userid}`);
+      if (btn) { btn.classList.add('btn-loading'); btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Đang gửi...'; }
 
       try {
         const res = await fetch(`${API_COMMAND}?userid=${userid}`, {
-          method: 'POST',
+          method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: action, weapon: weapon, main_stat: stat })
+          body:    JSON.stringify({ action, weapon, main_stat: stat })
         });
-        
+
         if (res.ok) {
-          alert(`✅ Lệnh thành công! Đang chờ Roblox thực thi...`);
+          showToast('success', '✅ Lệnh đã gửi!', `Chờ Roblox thực thi [${weapon}]...`);
         } else {
-          alert("❌ Lỗi gửi lệnh lên Server!");
+          showToast('error', '❌ Lỗi Server', `HTTP ${res.status}`);
         }
       } catch (err) {
-        alert("❌ Lỗi kết nối đến Server!");
+        showToast('error', '❌ Mất kết nối', 'Không thể kết nối đến Server!');
+      } finally {
+        // Restore button after 3s
+        setTimeout(() => {
+          if (btn) {
+            btn.classList.remove('btn-loading');
+            btn.innerHTML = action === 'swap_build'
+              ? '<i class="fa-solid fa-bolt"></i> TẨY ĐIỂM & ĐỔI HỆ'
+              : '<i class="fa-solid fa-hand-fist"></i> TRANG BỊ NHANH';
+          }
+        }, 3000);
       }
     }
 
-    // --- LOGIC LOAD DATA & SEARCH ---
+    // ── LOAD DATA ─────────────────────────────────────────
     async function loadData() {
       try {
         const res = await fetch(API_DATA);
+        if (!res.ok) return;
         allAccounts = await res.json();
-        
-        const keyword = document.getElementById('searchInput').value.trim();
-        if(!keyword) {
-            updateOverview(allAccounts);
-            renderTable(allAccounts);
-        }
-      } catch(e) {
-        console.log("Lỗi tải dữ liệu", e);
+
+        const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+        const filtered = keyword
+          ? Object.fromEntries(
+              Object.entries(allAccounts).filter(([,a]) =>
+                (a.player || '').toLowerCase().includes(keyword)
+              )
+            )
+          : allAccounts;
+
+        updateOverview(allAccounts);   // overview luôn dùng all
+        renderTable(filtered);         // table theo filter
+      } catch (e) {
+        console.error('Lỗi tải dữ liệu', e);
       }
     }
 
+    // ── SEARCH ────────────────────────────────────────────
     document.getElementById('searchInput').addEventListener('input', (e) => {
       const keyword = e.target.value.toLowerCase();
-      const filtered = {};
-      Object.keys(allAccounts).forEach(k => {
-        if (allAccounts[k].player.toLowerCase().includes(keyword)) {
-          filtered[k] = allAccounts[k];
-        }
-      });
+      const filtered = keyword
+        ? Object.fromEntries(
+            Object.entries(allAccounts).filter(([,a]) =>
+              (a.player || '').toLowerCase().includes(keyword)
+            )
+          )
+        : allAccounts;
       renderTable(filtered);
     });
 
-    // Khởi chạy
+    // ── INIT ──────────────────────────────────────────────
     setInterval(loadData, 5000);
     loadData();
   </script>
