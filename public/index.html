@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atlantis TrackStat & Control</title>
+  <title>Atlantis TrackStat</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
@@ -33,7 +33,7 @@
     .sea-badge-3 { background:#3b1f2b; color:#f472b6; border:1px solid #db277440; }
     .note-input { background:#0f1117; border:1px solid #2a2d3a; color:#e5e7eb;
                   border-radius:8px; padding:6px 10px; font-size:12px; width:100%;
-                  outline:none; transition: border-color 0.2s; resize: none; }
+                  outline:none; transition: border-color 0.2s; }
     .note-input:focus { border-color:#06b6d4; }
     .note-input::placeholder { color:#4b5563; }
     .note-saved { border-color:#22c55e !important; }
@@ -85,12 +85,12 @@
     <!-- HEADER -->
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-white flex items-center gap-3">
-        <i class="fa-solid fa-gamepad text-cyan-400"></i> Command Center
+        <i class="fa-solid fa-gamepad text-cyan-400"></i> Account Manager
       </h1>
       <div class="flex items-center gap-3">
         <div class="relative">
           <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
-          <input id="searchInput" type="text" placeholder="Tìm kiếm account..."
+          <input id="searchInput" type="text" placeholder="Tìm acc / note..."
                  class="bg-[#1e2130] border border-[#2a2d3a] rounded-lg pl-9 pr-4 py-2 text-sm outline-none focus:border-cyan-500 w-64 transition-colors">
         </div>
         <button onclick="loadData()"
@@ -142,7 +142,7 @@
           Danh sách Tài khoản (<span id="total-count" class="text-cyan-400">0</span>)
         </div>
         <div class="text-xs text-gray-500 flex items-center gap-1">
-          <i class="fa-solid fa-circle-notch animate-spin text-cyan-500"></i> Auto-sync: 5s
+          <i class="fa-solid fa-circle-notch animate-spin text-cyan-500"></i> Auto-sync: 10s
         </div>
       </div>
       <div class="overflow-x-auto">
@@ -172,13 +172,13 @@
   </div>
 
   <script>
-    const API_DATA      = '/api/data';
-    const API_NOTE      = '/api/note';
-    const API_NOTES_ALL = '/api/notes-all';
-    const API_AVATAR    = '/api/avatar?userid=';
+    const API_DATA   = '/api/data';
+    const API_NOTE   = '/api/note';
+    const API_AVATAR = '/api/avatar?userid=';
 
     let allAccounts = {};
-    let allNotes = {};
+    let allNotes    = {};
+    let allScrolls  = {};
 
     // ── UTILS ─────────────────────────────────────────
     function isOnline(acc) {
@@ -207,7 +207,6 @@
       setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    // Escape HTML
     function esc(s) {
       const d = document.createElement('div');
       d.textContent = s || '';
@@ -240,7 +239,7 @@
       document.getElementById('sidebar-online').textContent = `${online} Online`;
     }
 
-    // ── QUICK NOTE TAGS ───────────────────────────────
+    // ── QUICK TAGS ────────────────────────────────────
     const QUICK_TAGS = [
       { label: 'Farm Lv',    color: 'bg-blue-500/20 text-blue-400 border border-blue-500/30' },
       { label: 'Farm Frag',  color: 'bg-purple-500/20 text-purple-400 border border-purple-500/30' },
@@ -255,19 +254,13 @@
     function quickTag(userid, label) {
       const input = document.getElementById(`note-${userid}`);
       if (!input) return;
-      if (label === 'Trống') {
-        input.value = '';
-      } else {
-        input.value = label;
-      }
+      input.value = label === 'Trống' ? '' : label;
       saveNote(userid);
     }
 
-    // ── SAVE NOTE ─────────────────────────────────────
     async function saveNote(userid) {
       const input = document.getElementById(`note-${userid}`);
       if (!input) return;
-
       const note = input.value.trim();
       allNotes[userid] = note;
 
@@ -280,10 +273,10 @@
         if (res.ok) {
           input.classList.add('note-saved');
           setTimeout(() => input.classList.remove('note-saved'), 1500);
-          showToast('success', '✅ Đã lưu', `Ghi chú [${note || 'trống'}] cho ${userid}`);
+          showToast('success', '✅ Đã lưu', `Ghi chú [${note || 'trống'}]`);
         }
       } catch (e) {
-        showToast('error', '❌ Lỗi', 'Không lưu được ghi chú!');
+        showToast('error', '❌ Lỗi', 'Không lưu được!');
       }
     }
 
@@ -309,32 +302,25 @@
         const dot = online
           ? `<span class="online-dot mr-2"></span>`
           : `<span class="offline-dot mr-2"></span>`;
-
         const sea = acc.sea || 1;
-        const seaClass = `sea-badge-${sea}`;
-
         const ping = acc.ping || 0;
         const pingColor = ping < 100 ? 'text-green-400' : ping < 200 ? 'text-yellow-400' : 'text-red-400';
-
         const currentNote = esc(allNotes[acc.userid] || '');
 
-        // Quick tags HTML
         const tagsHtml = QUICK_TAGS.map(t =>
           `<span class="note-tag ${t.color}" onclick="quickTag('${acc.userid}','${t.label}')">${t.label}</span>`
         ).join(' ');
 
         return `
         <tr class="table-row border-b border-[#2a2d3a] transition-all">
-
           <td class="px-4 py-4 text-gray-500 font-mono text-xs">${idx + 1}</td>
-
           <td class="px-4 py-4">
             <div class="flex items-center gap-3">
               <div class="relative">
                 <img src="${API_AVATAR}${acc.userid}"
                      class="w-11 h-11 rounded-lg border border-cyan-500/20 bg-[#0f1117]"
                      onerror="this.src='https://placehold.co/44x44/1e2130/cyan?text=?'">
-                <span class="absolute -bottom-1 -right-1 text-[9px] px-1 rounded font-bold ${seaClass}">S${sea}</span>
+                <span class="absolute -bottom-1 -right-1 text-[9px] px-1 rounded font-bold sea-badge-${sea}">S${sea}</span>
               </div>
               <div>
                 <div class="flex items-center font-bold text-white text-[14px]">
@@ -345,24 +331,13 @@
               </div>
             </div>
           </td>
-
           <td class="px-4 py-4">
             <div class="space-y-1">
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] text-gray-500 w-7 font-bold">LV</span>
-                <span class="text-sm font-bold text-white">${acc.level || 0}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] text-gray-500 w-7 font-bold">$</span>
-                <span class="text-xs font-semibold text-green-400">${fmtNum(acc.beli)}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] text-gray-500 w-7 font-bold">F</span>
-                <span class="text-xs font-semibold text-purple-400">${fmtNum(acc.frag)}</span>
-              </div>
+              <div class="flex items-center gap-2"><span class="text-[10px] text-gray-500 w-7 font-bold">LV</span><span class="text-sm font-bold text-white">${acc.level || 0}</span></div>
+              <div class="flex items-center gap-2"><span class="text-[10px] text-gray-500 w-7 font-bold">$</span><span class="text-xs font-semibold text-green-400">${fmtNum(acc.beli)}</span></div>
+              <div class="flex items-center gap-2"><span class="text-[10px] text-gray-500 w-7 font-bold">F</span><span class="text-xs font-semibold text-purple-400">${fmtNum(acc.frag)}</span></div>
             </div>
           </td>
-
           <td class="px-4 py-4">
             <div class="space-y-1.5 flex flex-col">
               <span class="badge bg-red-500/10 border border-red-500/20 text-red-400">🍎 ${acc.fruit || 'Không'}</span>
@@ -370,7 +345,6 @@
               <span class="badge bg-orange-500/10 border border-orange-500/20 text-orange-400">🥊 ${acc.fighting || 'Không'}</span>
             </div>
           </td>
-
           <td class="px-4 py-4">
             <div class="grid grid-cols-2 gap-1.5 text-xs bg-[#0f1117] p-2 rounded-lg border border-[#2a2d3a]">
               <div class="flex justify-between"><span class="text-gray-500">❤️</span><span class="text-red-400 font-bold">${acc.heart || 0}</span></div>
@@ -379,7 +353,6 @@
               <div class="flex justify-between"><span class="text-gray-500">⭐</span><span class="text-yellow-400 font-bold">${acc.legend || 0}</span></div>
             </div>
           </td>
-
           <td class="px-4 py-4">
             <div class="space-y-1 text-xs">
               <div class="flex justify-between w-24"><span class="text-gray-500">FPS</span><span class="text-emerald-400 font-bold">${acc.fps || 0}</span></div>
@@ -388,30 +361,21 @@
               <div class="flex justify-between w-24"><span class="text-gray-500">Sync</span><span class="text-gray-600 text-[10px]">${acc.lastUpdate || '-'}</span></div>
             </div>
           </td>
-
           <td class="px-4 py-4">
             <div class="flex flex-col gap-2 items-center" style="min-width:180px;">
-              <!-- NOTE INPUT -->
               <div class="w-full flex gap-1">
-                <input id="note-${acc.userid}"
-                       type="text"
-                       class="note-input flex-1"
-                       placeholder="Ghi chú đơn..."
-                       value="${currentNote}"
+                <input id="note-${acc.userid}" type="text" class="note-input flex-1"
+                       placeholder="Ghi chú đơn..." value="${currentNote}"
                        onkeydown="if(event.key==='Enter') saveNote('${acc.userid}')">
                 <button onclick="saveNote('${acc.userid}')"
                         class="bg-cyan-600/20 hover:bg-cyan-600 border border-cyan-500/40 text-cyan-400 hover:text-white px-2 rounded-lg transition-all"
-                        title="Lưu ghi chú">
+                        title="Lưu">
                   <i class="fa-solid fa-floppy-disk text-xs"></i>
                 </button>
               </div>
-              <!-- QUICK TAGS -->
-              <div class="flex flex-wrap gap-1 justify-center">
-                ${tagsHtml}
-              </div>
+              <div class="flex flex-wrap gap-1 justify-center">${tagsHtml}</div>
             </div>
           </td>
-
         </tr>`;
       }).join('');
     }
@@ -419,13 +383,13 @@
     // ── LOAD DATA ─────────────────────────────────────
     async function loadData() {
       try {
-        const [dataRes, notesRes] = await Promise.all([
-          fetch(API_DATA),
-          fetch(API_NOTES_ALL)
-        ]);
+        const res = await fetch(API_DATA);
+        if (!res.ok) return;
+        const result = await res.json();
 
-        allAccounts = await dataRes.json();
-        allNotes    = await notesRes.json();
+        allAccounts = result.accounts || {};
+        allNotes    = result.notes    || {};
+        allScrolls  = result.scrolls  || {};
 
         const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
         const filtered = keyword
@@ -444,7 +408,6 @@
       }
     }
 
-    // ── SEARCH (cũng tìm theo note) ──────────────────
     document.getElementById('searchInput').addEventListener('input', (e) => {
       const keyword = e.target.value.toLowerCase();
       const filtered = keyword
@@ -458,8 +421,8 @@
       renderTable(filtered);
     });
 
-    // ── INIT ──────────────────────────────────────────
-    setInterval(loadData, 5000);
+    // INIT - 10s thay vì 5s để giảm tải
+    setInterval(loadData, 10000);
     loadData();
   </script>
 </body>
