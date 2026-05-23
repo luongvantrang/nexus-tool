@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   try {
     let ids = await kv.smembers('account_ids');
 
-    // Fallback
+    // Fallback: rebuild Set nếu rỗng
     if (!ids || ids.length === 0) {
       const keys = await kv.keys('account_*');
       if (keys && keys.length > 0) {
@@ -14,10 +14,10 @@ export default async function handler(req, res) {
     }
 
     if (!ids || ids.length === 0) {
-      return res.status(200).json({ accounts: {}, notes: {} });
+      return res.status(200).json({ accounts: {}, notes: {}, scrolls: {} });
     }
 
-    // Lấy CẢ data + note + scroll trong 1 lần (song song)
+    // Lấy data + note + scroll song song
     const dataKeys   = ids.map(id => `account_${id}`);
     const noteKeys   = ids.map(id => `note_${id}`);
     const scrollKeys = ids.map(id => `scroll_${id}`);
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       }
     });
 
-    // Cleanup
+    // Cleanup ID hết hạn
     if (deadIds.length > 0) {
       for (const id of deadIds) {
         kv.srem('account_ids', id).catch(() => {});
