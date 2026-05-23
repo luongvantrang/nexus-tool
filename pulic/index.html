@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atlantis Account Manager</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-left">
+        <div class="live-badge">
+          <i class="fa-solid fa-wave-square"></i>
+          LIVE ACCOUNT TRACKER
+        </div>
+
+        <h1>Atlantis Account Manager</h1>
+        <p>Theo dõi tài khoản Blox Fruits, note đơn, inventory và trạng thái online.</p>
+      </div>
+
+      <div class="header-right">
+        <div class="search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" placeholder="Tìm acc / note..." />
+        </div>
+
+        <button class="btn" onclick="loadData()">
+          <i class="fa-solid fa-rotate-right"></i>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="card blue">
+        <div class="card-top">
+          <div class="icon"><i class="fa-solid fa-users"></i></div>
+        </div>
+        <p>Online / Total</p>
+        <h2 id="ov-online">0 / 0</h2>
+      </div>
+
+      <div class="card green">
+        <div class="card-top">
+          <div class="icon"><i class="fa-solid fa-money-bill-wave"></i></div>
+        </div>
+        <p>Total Beli</p>
+        <h2 id="ov-beli">0</h2>
+      </div>
+
+      <div class="card purple">
+        <div class="card-top">
+          <div class="icon"><i class="fa-solid fa-gem"></i></div>
+        </div>
+        <p>Total Fragment</p>
+        <h2 id="ov-frag">0</h2>
+      </div>
+
+      <div class="card red">
+        <div class="card-top">
+          <div class="icon"><i class="fa-solid fa-heart"></i></div>
+        </div>
+        <p>Total Heart</p>
+        <h2 id="ov-heart">0</h2>
+      </div>
+
+      <div class="card gold">
+        <div class="card-top">
+          <div class="icon"><i class="fa-solid fa-scroll"></i></div>
+        </div>
+        <p>Mythic + Legendary</p>
+        <h2 id="ov-scroll">0</h2>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3>
+          <i class="fa-solid fa-list-check"></i>
+          Danh sách tài khoản
+          <span>(<span id="total-count">0</span>)</span>
+        </h3>
+
+        <div class="sync">
+          <i class="fa-solid fa-circle"></i>
+          Auto-sync: 30s
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Account</th>
+              <th>Details</th>
+              <th>Equipped</th>
+              <th>Material</th>
+              <th>Scroll</th>
+              <th>System</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="8" class="loading-cell">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Đang tải dữ liệu...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <i id="toastIcon" class="fa-solid fa-circle-check"></i>
+
+    <div>
+      <strong id="toastTitle">Success</strong>
+      <div id="toastMsg">Saved</div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
