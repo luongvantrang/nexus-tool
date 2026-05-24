@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atlantis Service Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon"><i class="fa-solid fa-dragon"></i></div>
+        <div><h2>Atlantis</h2><span>Service Panel</span></div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-page="dashboard"><i class="fa-solid fa-chart-simple"></i>Dashboard</button>
+        <button class="nav-item" data-page="accounts"><i class="fa-solid fa-users"></i>Accounts</button>
+        <button class="nav-item" data-page="orders"><i class="fa-solid fa-clipboard-list"></i>Orders</button>
+        <button class="nav-item" data-page="wallet"><i class="fa-solid fa-wallet"></i>Nạp tiền</button>
+      </nav>
+      <div class="sidebar-card">
+        <div class="sidebar-card-title"><i class="fa-solid fa-signal"></i>Server Status</div>
+        <div class="sidebar-status"><span class="pulse-dot"></span>Active</div>
+        <p>Auto-sync every 30s</p>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow"><i class="fa-solid fa-wave-square"></i>Live Service Tracker</div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageDesc">Quản lý acc Blox Fruits, đơn cày thuê và nạp tiền.</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="text" placeholder="Tìm acc / note..." /></div>
+          <button class="refresh-btn" onclick="loadData()"><i class="fa-solid fa-rotate-right"></i>Refresh</button>
+        </div>
+      </header>
+      <section class="stats">
+        <article class="stat-card stat-blue"><div class="stat-icon"><i class="fa-solid fa-users"></i></div><div><span>Online / Total</span><strong id="ov-online">0 / 0</strong><small>Active accounts</small></div></article>
+        <article class="stat-card stat-green"><div class="stat-icon"><i class="fa-solid fa-money-bill-wave"></i></div><div><span>Total Beli</span><strong id="ov-beli">0</strong><small>All accounts</small></div></article>
+        <article class="stat-card stat-purple"><div class="stat-icon"><i class="fa-solid fa-gem"></i></div><div><span>Total Fragment</span><strong id="ov-frag">0</strong><small>Fragment stock</small></div></article>
+        <article class="stat-card stat-red"><div class="stat-icon"><i class="fa-solid fa-heart"></i></div><div><span>Total Heart</span><strong id="ov-heart">0</strong><small>Material</small></div></article>
+        <article class="stat-card stat-gold"><div class="stat-icon"><i class="fa-solid fa-scroll"></i></div><div><span>Mythic + Legendary</span><strong id="ov-scroll">0</strong><small>Scroll stock</small></div></article>
+      </section>
+      <section id="dashboardPage" class="page active-page">
+        <div class="service-grid">
+          <article class="service-card"><div class="service-banner service-blue"><i class="fa-solid fa-arrow-up-wide-short"></i></div><div class="service-body"><h3>Cày Level</h3><p>Quản lý acc đang farm level, sea, quest.</p><div class="service-meta"><span><i class="fa-solid fa-circle"></i> Sẵn sàng</span><b id="dash-online">0 online</b></div><button class="service-btn" onclick="openPage('accounts')">Xem tài khoản</button></div></article>
+          <article class="service-card"><div class="service-banner service-purple"><i class="fa-solid fa-gem"></i></div><div class="service-body"><h3>Farm Fragment</h3><p>Theo dõi fragment và tài nguyên cần farm.</p><div class="service-meta"><span><i class="fa-solid fa-circle"></i> Đang hoạt động</span><b id="dash-frag">0 frag</b></div><button class="service-btn" onclick="openPage('accounts')">Xem chi tiết</button></div></article>
+          <article class="service-card"><div class="service-banner service-gold"><i class="fa-solid fa-scroll"></i></div><div class="service-body"><h3>Scroll Hunt</h3><p>Tách rõ Mythic Scroll và Legendary Scroll.</p><div class="service-meta"><span><i class="fa-solid fa-circle"></i> Tracking</span><b id="dash-scroll">0 scroll</b></div><button class="service-btn" onclick="openPage('accounts')">Xem scroll</button></div></article>
+          <article class="service-card"><div class="service-banner service-green"><i class="fa-solid fa-wallet"></i></div><div class="service-body"><h3>Nạp Tiền</h3><p>Trang bank/card cho khách nạp tiền dịch vụ.</p><div class="service-meta"><span><i class="fa-solid fa-circle"></i> Available</span><b>Bank/Card</b></div><button class="service-btn" onclick="openPage('wallet')">Nạp ngay</button></div></article>
+        </div>
+        <div class="panel mini-panel"><div class="panel-header"><div><h3><i class="fa-solid fa-bolt"></i> Hoạt động nhanh</h3><p>Gợi ý trạng thái hệ thống hiện tại.</p></div></div><div class="activity-list" id="activityList"><div class="activity-item">Đang chờ dữ liệu từ API...</div></div></div>
+      </section>
+      <section id="accountsPage" class="page">
+        <section class="filters">
+          <button class="filter-btn active" data-filter="all"><i class="fa-solid fa-layer-group"></i>All</button>
+          <button class="filter-btn" data-filter="online"><i class="fa-solid fa-circle"></i>Online</button>
+          <button class="filter-btn" data-filter="sea3"><i class="fa-solid fa-water"></i>Sea 3</button>
+          <button class="filter-btn" data-filter="mythic"><i class="fa-solid fa-wand-sparkles"></i>Mythic</button>
+          <button class="filter-btn" data-filter="highbeli"><i class="fa-solid fa-coins"></i>High Beli</button>
+        </section>
+        <section class="panel"><div class="panel-header"><div><h3><i class="fa-solid fa-list-check"></i>Danh sách tài khoản <span>(<span id="total-count">0</span>)</span></h3><p>Desktop dùng bảng, mobile tự chuyển sang card dễ đọc.</p></div><div class="sync-pill"><span class="pulse-dot"></span>Auto-sync: 30s</div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Account</th><th>Details</th><th>Equipped</th><th>Material</th><th>Scroll</th><th>System</th><th>Note</th></tr></thead><tbody id="tableBody"><tr><td colspan="8" class="loading-cell"><i class="fa-solid fa-spinner fa-spin"></i>Đang tải dữ liệu...</td></tr></tbody></table></div></section>
+        <section class="mobile-list" id="mobileList"></section>
+      </section>
+      <section id="ordersPage" class="page"><div class="orders-grid"><div class="order-column"><div class="order-title pending"><i class="fa-solid fa-clock"></i>Pending</div><div id="pendingOrders" class="order-list"></div></div><div class="order-column"><div class="order-title doing"><i class="fa-solid fa-spinner"></i>Doing</div><div id="doingOrders" class="order-list"></div></div><div class="order-column"><div class="order-title done"><i class="fa-solid fa-circle-check"></i>Done</div><div id="doneOrders" class="order-list"></div></div></div></section>
+      <section id="walletPage" class="page">
+        <div class="wallet-grid">
+          <article class="wallet-card bank-card"><div class="wallet-head"><div><span class="wallet-label">Bank Transfer</span><h3>Nạp tiền qua ngân hàng</h3></div><i class="fa-solid fa-building-columns"></i></div><div class="qr-box"><div class="qr-placeholder"><i class="fa-solid fa-qrcode"></i><span>QR BANK</span></div></div><div class="bank-info"><div><span>Ngân hàng</span><b>MBBank</b></div><button onclick="copyText('MBBank')">Copy</button></div><div class="bank-info"><div><span>Số tài khoản</span><b>0123456789</b></div><button onclick="copyText('0123456789')">Copy</button></div><div class="bank-info"><div><span>Chủ tài khoản</span><b>ATLANTIS SERVICE</b></div><button onclick="copyText('ATLANTIS SERVICE')">Copy</button></div><div class="transfer-note">Nội dung CK: <strong>ATLANTIS</strong><button onclick="copyText('ATLANTIS')"><i class="fa-solid fa-copy"></i></button></div></article>
+          <article class="wallet-card"><div class="wallet-head"><div><span class="wallet-label">Card Payment</span><h3>Nạp bằng thẻ cào</h3></div><i class="fa-solid fa-credit-card"></i></div><div class="form-grid"><label>Loại thẻ<select id="cardType"><option>Viettel</option><option>Vinaphone</option><option>Mobifone</option><option>Gate</option></select></label><label>Mệnh giá<select id="cardAmount"><option>10,000đ</option><option>20,000đ</option><option>50,000đ</option><option>100,000đ</option><option>200,000đ</option><option>500,000đ</option></select></label><label>Seri<input id="cardSeri" type="text" placeholder="Nhập seri thẻ"></label><label>Mã thẻ<input id="cardCode" type="text" placeholder="Nhập mã thẻ"></label></div><button class="submit-card" onclick="submitCard()"><i class="fa-solid fa-paper-plane"></i>Gửi thẻ</button><p class="wallet-warning">Lưu ý: phần này đang là UI demo. Muốn xử lý thật cần thêm API nạp thẻ.</p></article>
+        </div>
+      </section>
+    </main>
+  </div>
+  <nav class="mobile-nav"><button class="mobile-nav-item active" data-page="dashboard"><i class="fa-solid fa-house"></i>Home</button><button class="mobile-nav-item" data-page="accounts"><i class="fa-solid fa-users"></i>Acc</button><button class="mobile-nav-item" data-page="orders"><i class="fa-solid fa-clipboard-list"></i>Order</button><button class="mobile-nav-item" data-page="wallet"><i class="fa-solid fa-wallet"></i>Nạp</button></nav>
+  <div class="toast" id="toast"><i id="toastIcon" class="fa-solid fa-circle-check"></i><div><strong id="toastTitle">Success</strong><p id="toastMsg">Saved</p></div></div>
+  <script src="/app.js"></script>
+</body>
+</html>
