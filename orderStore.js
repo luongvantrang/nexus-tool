@@ -1,0 +1,12 @@
+const fs=require('fs');const path=require('path');const FILE=path.join(__dirname,'orders.json');
+function loadOrders(){try{return fs.existsSync(FILE)?JSON.parse(fs.readFileSync(FILE,'utf8')):{}}catch{return {}}}
+function saveOrders(o){fs.writeFileSync(FILE,JSON.stringify(o,null,2),'utf8')}
+function makeId(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let id='AT';for(let i=0;i<6;i++)id+=c[Math.floor(Math.random()*c.length)];return id}
+function createOrder(d){const o=loadOrders();let id=makeId();while(o[id])id=makeId();o[id]={id,customerName:d.customerName||'',discord:d.discord||'',service:d.service||'',packageName:d.packageName||'',price:d.price||'',payment:d.payment||'bank',status:'pending',login:{username:d.login?.username||'',password:d.login?.password||'',backupCode:d.login?.backupCode||'',cookie:d.login?.cookie||'',note:d.login?.note||''},staffNote:'',logs:[{type:'created',message:'Đơn đã được tạo.',by:d.customerName||d.discord||'web',createdAt:Date.now()}],createdAt:Date.now(),updatedAt:Date.now()};saveOrders(o);return o[id]}
+function getOrder(id){return loadOrders()[id]||null}
+function listOrders(){return Object.values(loadOrders()).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))}
+function updateStatus(id,status,by='admin'){const o=loadOrders();if(!o[id])return null;o[id].status=status;o[id].updatedAt=Date.now();o[id].logs=o[id].logs||[];o[id].logs.push({type:'status',message:`Đổi trạng thái: ${status}`,by,createdAt:Date.now()});saveOrders(o);return o[id]}
+function addLog(id,type,message,by='admin'){const o=loadOrders();if(!o[id])return null;o[id].logs=o[id].logs||[];o[id].logs.push({type,message,by,createdAt:Date.now()});o[id].updatedAt=Date.now();saveOrders(o);return o[id]}
+function saveStaffNote(id,staffNote,by='admin'){const o=loadOrders();if(!o[id])return null;o[id].staffNote=staffNote||'';o[id].updatedAt=Date.now();o[id].logs=o[id].logs||[];o[id].logs.push({type:'staff_note',message:'Admin cập nhật ghi chú.',by,createdAt:Date.now()});saveOrders(o);return o[id]}
+function clearLogin(id,by='admin'){const o=loadOrders();if(!o[id])return null;o[id].login={username:'',password:'',backupCode:'',cookie:'',note:''};o[id].updatedAt=Date.now();o[id].logs=o[id].logs||[];o[id].logs.push({type:'security',message:'Đã xóa thông tin đăng nhập.',by,createdAt:Date.now()});saveOrders(o);return o[id]}
+module.exports={createOrder,getOrder,listOrders,updateStatus,addLog,saveStaffNote,clearLogin};
